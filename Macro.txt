@@ -205,6 +205,70 @@ SetPath = inPath
 
 End Function
 
+Function GetRepName()
+'Gets the name of the sales representative
+
+Dim SalesRepSplit
+
+If SheetAnswer = vbYes Then
+	If Not IsEmpty(SourceBook.ActiveSheet.Cells(SourceContractRow, 8).Value) And EmptyCount > 2 Then
+        SalesRepSplit = Split(SourceBook.ActiveSheet.Cells(SourceContractRow, 8).Value, " ")
+        GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
+    Else
+        SalesRepSplit = Split(SourceBook.ActiveSheet.Cells(SourceContractRow, 7).Value, " ")
+        GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
+    End If
+Else
+	GetRepName = InputBox("Please enter the name of the Sales Representative" & vbNewLine & "associated with this contract." & vbNewLine & "Contract Number: " & ContractNo, "Sales Representative Name")
+	If GetRepName = vbNullString Then
+		Call ResetSettings
+		End
+	ElseIf GetRepName Like "*[0-9]*" Then
+		MsgBox "Sorry, only letters are allowed in a Sales Representative's name." & vbNewLine & "Please enter the Representative's name with this format:" & vbNewLine & "FirstName LastName", , "Invalid Character"
+		GetRepName = vbNullString
+	ElseIf InStr(GetRepName, " ") = 0 Then
+		MsgBox "Please enter the Representative's name with this format:" & vbNewLine & "FirstName LastName", , "Missing Space"
+		GetRepName = vbNullString
+	Else
+	End If
+
+End Function
+
+Sub MergeBooks(inBook As Workbook, inNonBook As Workbook)
+'Merges contract and non contract items for Teri Sprtel
+
+Dim NonStart As Long
+Dim NonEnd As Long
+Dim OnEnd As Long
+
+NonStart = FindFirstInstanceWhole("Product", inNonBook.ActiveSheet).Offset(1, 0).Row
+NonEnd = inNonBook.ActiveSheet.Range("N" & inNonBook.ActiveSheet.Rows.Count).End(xlUp).Offset(1, 0).Row
+OnEnd = inBook.ActiveSheet.Range("N" & inBook.ActiveSheet.Rows.Count).End(xlUp).Offset(1, 0).Row
+
+If NonStart <> NonEnd Then inBook.ActiveSheet.Cells(OnEnd,1).Offset(1, 0).Value = inNonBook.ActiveSheet.Range(Cells(NonStart, 1), Cells(NonEnd, 22)).Value
+
+
+End Sub
+
+Function GetContract(TextBook As Workbook)
+
+Dim TxtContractSplit
+
+TxtContractSplit = Split(TextBook.ActiveSheet.Range("A3").Value, ",")
+
+If UBound(TxtContractSplit, 1) - LBound(TxtContractSplit, 1) + 1 <= 2 Then
+    TxtContractSplit = Split(TextBook.ActiveSheet.Range("A3").Value, " ")
+    GetContract = Trim(TxtContractSplit(1))
+Else
+
+    GetContract = Trim(TxtContractSplit(1))
+
+End If
+
+If Right(GetContract, 1) = "," Then GetContract = Left(GetContract, Len(GetContract) - 1)
+
+End Function
+
 Function SaveXlsxFiles(SourceBook As Workbook, TextBook As Workbook, SheetAnswer As String)
 ' Saves the file using the contract name and the sales rep name
 
@@ -214,33 +278,17 @@ Dim CurrentCell As Range
 Dim EmptyCount As Long
 Dim FirstName As String
 Dim SalesRep As String
-Dim SalesRepSplit
 Dim SaveName As String
 Dim SavePath As String
 Dim SourceContractRow As String
 Dim SpacePlace As Long
-Dim TxtContractSplit
 
-TxtContractSplit = Split(TextBook.ActiveSheet.Range("A3").Value, ",")
-
-If UBound(TxtContractSplit, 1) - LBound(TxtContractSplit, 1) + 1 <= 2 Then
-    TxtContractSplit = Split(TextBook.ActiveSheet.Range("A3").Value, " ")
-    ContractNo = Trim(TxtContractSplit(1))
-Else
-
-    ContractNo = Trim(TxtContractSplit(1))
-
-End If
-
-If Right(ContractNo, 1) = "," Then ContractNo = Left(ContractNo, Len(ContractNo) - 1)
+Call
 
 If SheetAnswer = vbYes Then 'If there is a source sheet
 
     SourceContractRow = FindFirstInstancePart(ContractNo, SourceBook.ActiveSheet).Row
     SaveName = ContractNo & " " & Trim(SourceBook.ActiveSheet.Cells(SourceContractRow, 2).Value)
-
-
-
 
     If IsEmpty(SourceBook.ActiveSheet.Cells(SourceContractRow + 1, 2).Value) Then
         Set CurrentCell = Cells(SourceContractRow + 1, 2)
@@ -251,13 +299,7 @@ If SheetAnswer = vbYes Then 'If there is a source sheet
         End If
     End If
 
-    If Not IsEmpty(SourceBook.ActiveSheet.Cells(SourceContractRow, 8).Value) And EmptyCount > 2 Then
-        SalesRepSplit = Split(SourceBook.ActiveSheet.Cells(SourceContractRow, 8).Value, " ")
-        SalesRep = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
-    Else
-        SalesRepSplit = Split(SourceBook.ActiveSheet.Cells(SourceContractRow, 7).Value, " ")
-        SalesRep = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
-    End If
+	SalesRep = GetRepName
 
     With SourceBook.ActiveSheet.Cells(SourceContractRow, 9)
         .NumberFormat = "mm/dd/yyyy hh:mm:ss"
@@ -279,18 +321,7 @@ Else ' No source sheet
     End If
 
     Do While SalesRep Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True
-        SalesRep = InputBox("Please enter the name of the Sales Representative" & vbNewLine & "associated with this contract." & vbNewLine & "Contract Number: " & ContractNo, "Sales Representative Name")
-        If SalesRep = vbNullString Then
-            Call ResetSettings
-            End
-        ElseIf SalesRep Like "*[0-9]*" Then
-            MsgBox "Sorry, only letters are allowed in a Sales Representative's name." & vbNewLine & "Please enter the Representative's name with this format:" & vbNewLine & "FirstName LastName", , "Invalid Character"
-            SalesRep = vbNullString
-        ElseIf InStr(SalesRep, " ") = 0 Then
-            MsgBox "Please enter the Representative's name with this format:" & vbNewLine & "FirstName LastName", , "Missing Space"
-            SalesRep = vbNullString
-        Else
-        End If
+        SalesRep = GetRepName
     Loop
 End If
 
@@ -524,6 +555,7 @@ Dim Email As Integer
 Dim EmailAnswer As Integer
 Dim Files As Long
 Dim Path As String
+Dim Rep As String
 Dim SecondsElapsed As Double
 Dim SendTime As Date
 Dim ShouldMove As Integer
@@ -585,6 +617,11 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
     Set TxtWorkbook = ActiveWorkbook
 
+	Rep = GetRepName
+
+	If Rep = "Teri Sprtel" Then
+		'''''''''''''''''''''''''''''THIS IS WHERE CHANGES NEED MADE
+		'Search for "NON" file, and if one exists merge the NON and the regular file.
     Call Formatting(TxtWorkbook)
 
     ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer)
