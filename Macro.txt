@@ -269,7 +269,18 @@ If Right(GetContract, 1) = "," Then GetContract = Left(GetContract, Len(GetContr
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function SaveXlsxFiles(SourceBook As Workbook, TextBook As Workbook, SheetAnswer As String, ContractNo As String, inRep As String)
+Function SourceContractRow(inSourceBook As Workbook, inSheetAnswer As String, inContractNo As String)
+
+If inSheetAnswer = vbYes Then 'If there is a source sheet
+
+    SourceContractRow(1) = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet).Row
+    SourceContractRow(2) = inContractNo & " " & Trim(inSourceBook.ActiveSheet.Cells(SourceContractRow, 2).Value)
+
+End If
+
+End Function
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Function SaveXlsxFiles(SourceBook As Workbook, TextBook As Workbook, SheetAnswer As String, ContractNo As String, inRep As String, SourceRow As String)
 'Saves the file using the contract name and the sales rep name
 
 Dim ContractAndRep(1 To 3) As String
@@ -278,16 +289,15 @@ Dim EmptyCount As Long
 Dim FirstName As String
 Dim SaveName As String
 Dim SavePath As String
-Dim SourceContractRow As String
 Dim SpacePlace As Long
 
 If SheetAnswer = vbYes Then 'If there is a source sheet
 
-    SourceContractRow = FindFirstInstancePart(ContractNo, SourceBook.ActiveSheet).Row
-    SaveName = ContractNo & " " & Trim(SourceBook.ActiveSheet.Cells(SourceContractRow, 2).Value)
+    'SourceRow = SourceContractRow(SheetAnswer, ContractNo)
+    SaveName = SourceContractRow(2)
 
-    If IsEmpty(SourceBook.ActiveSheet.Cells(SourceContractRow + 1, 2).Value) Then
-        Set CurrentCell = Cells(SourceContractRow + 1, 2)
+    If IsEmpty(SourceBook.ActiveSheet.Cells(SourceRow(1) + 1, 2).Value) Then
+        Set CurrentCell = Cells(SourceRow(1) + 1, 2)
         EmptyCount = 1
         If IsEmpty(CurrentCell.Offset(1, 0)) Then
                 CurrentCell = CurrentCell.Offset(1, 0)
@@ -295,7 +305,7 @@ If SheetAnswer = vbYes Then 'If there is a source sheet
         End If
     End If
 
-    With SourceBook.ActiveSheet.Cells(SourceContractRow, 9)
+    With SourceBook.ActiveSheet.Cells(SourceRow(1), 9)
         .NumberFormat = "mm/dd/yyyy hh:mm:ss"
         .Value = Now
         .Cells.Columns.autofit
@@ -553,6 +563,7 @@ Dim Rep As String
 Dim SecondsElapsed As Double
 Dim SendTime As Date
 Dim ShouldMove As Integer
+Dim SourceConRow() As String
 Dim SourceWorkbook As Workbook
 Dim SpreadSheetAnswer As String
 Dim StartTime As Double
@@ -613,7 +624,9 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
     ContractNumber = GetContract(TxtWorkbook)
 
-    Rep = GetRepName(SpreadSheetAnswer,)
+    SourceConRow = SourceContractRow(SpreadSheetAnswer, ContractNumber)
+
+    Rep = GetRepName(SpreadSheetAnswer, SourceConRow(1))
 
     If Rep = "Teri Sprtel" Then
         'Searches for "NON" file, and if one exists merge the NON and the regular file.
@@ -629,7 +642,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
     Call Formatting(TxtWorkbook)
 
-    ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, ContractNumber, Rep)
+    ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, ContractNumber, Rep, SourceConRow(1))
 
     If Email = 1 Then SendTime = EmailXslxFiles(ContractAndRepArray(1), ContractAndRepArray(2), ContractAndRepArray(3), SendTime, TxtWorkbook)
 
