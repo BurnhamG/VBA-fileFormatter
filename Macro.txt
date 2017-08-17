@@ -28,14 +28,14 @@ Sub MarkNegativeGP()
 'This fills any cells with a negative GP purple
 
 With Columns("I:I")
-	.FormatConditions.Delete 'Removes any conditional formatting that may exist (Mostly a safeguard)
-	With .FormatConditions.Add(Type:=xlCellValue, Operator:=xlLess, Formula1:="=0") 'Condition searches for any cells with a negative value
-		With .Interior
-			.Color = 16751052 'The fill color
-			.TintAndShade = 0
-		End With
-		.StopIfTrue = False 'Only used with multiple conditional formatting rules (To prevent further formatting of cells that are true in the first pass)
-	End With
+    .FormatConditions.Delete 'Removes any conditional formatting that may exist (Mostly a safeguard)
+    With .FormatConditions.Add(Type:=xlCellValue, Operator:=xlLess, Formula1:="=0") 'Condition searches for any cells with a negative value
+        With .Interior
+            .Color = 16751052 'The fill color
+            .TintAndShade = 0
+        End With
+        .StopIfTrue = False 'Only used with multiple conditional formatting rules (To prevent further formatting of cells that are true in the first pass)
+    End With
 End With
 
 End Sub
@@ -109,13 +109,13 @@ CurrentRow = TableStart
 'Next, this iterates through the table and, if the sales column is blank, changes the font color to bright red
 
 Do While CurrentRow < TableEnd
-	If IsEmpty(Cells(CurrentRow, "E")) Then
-		With Rows(CurrentRow).Font
-			.Color = 255
-			.TintAndShade = 0
-		End With
-	End If
-		CurrentRow = CurrentRow + 1
+    If IsEmpty(Cells(CurrentRow, "E")) Then
+        With Rows(CurrentRow).Font
+            .Color = 255
+            .TintAndShade = 0
+        End With
+    End If
+        CurrentRow = CurrentRow + 1
 Loop
 
 'MakeCurrency marks the appropriate rows with a currency style
@@ -147,21 +147,21 @@ Dim iStart          As Integer
 Dim sCurDir         As String
 
 If sPath <> vbNullString Then
-	aDirs = Split(sPath, "\")
-	If Left(sPath, 2) = "\\" Then
-		iStart = 3
-	Else
-		iStart = 1
-	End If
+    aDirs = Split(sPath, "\")
+    If Left(sPath, 2) = "\\" Then
+        iStart = 3
+    Else
+        iStart = 1
+    End If
 
-	sCurDir = Left(sPath, InStr(iStart, sPath, "\"))
+    sCurDir = Left(sPath, InStr(iStart, sPath, "\"))
 
-	For I = iStart To UBound(aDirs)
-		sCurDir = sCurDir & aDirs(I) & "\"
-		If Dir(sCurDir, vbDirectory) = vbNullString Then
-			MkDir sCurDir
-		End If
-	Next I
+    For I = iStart To UBound(aDirs)
+        sCurDir = sCurDir & aDirs(I) & "\"
+        If Dir(sCurDir, vbDirectory) = vbNullString Then
+            MkDir sCurDir
+        End If
+    Next I
 End If
 
 End Sub
@@ -201,34 +201,34 @@ SetPath = inPath
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function GetRepName()
+Function GetRepName(inSheetAnswer, inSourceRow)
 'Gets the name of the sales representative
 
 Dim SalesRepSplit
 
 Do While GetRepName Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True 'Can't escape unless name is valid
-	If SheetAnswer = vbYes Then
-		If Not IsEmpty(SourceBook.ActiveSheet.Cells(SourceContractRow, 8).Value) And EmptyCount > 2 Then
-			SalesRepSplit = Split(SourceBook.ActiveSheet.Cells(SourceContractRow, 8).Value, " ")
-			GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
-		Else
-			SalesRepSplit = Split(SourceBook.ActiveSheet.Cells(SourceContractRow, 7).Value, " ")
-			GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
-		End If
-	Else
-		GetRepName = InputBox("Please enter the name of the Sales Representative" & vbNewLine & "associated with this contract." & vbNewLine & "Contract Number: " & ContractNo, "Sales Representative Name")
-		If GetRepName = vbNullString Then
-			Call ResetSettings
-			End
-		ElseIf GetRepName Like "*[0-9]*" Then
-			MsgBox "Sorry, only letters are allowed in a Sales Representative's name." & vbNewLine & "Please enter the Representative's name with this format:" & vbNewLine & "FirstName LastName", , "Invalid Character"
-			GetRepName = vbNullString
-		ElseIf InStr(GetRepName, " ") = 0 Then
-			MsgBox "Please enter the Representative's name with this format:" & vbNewLine & "FirstName LastName", , "Missing Space"
-			GetRepName = vbNullString
-		Else
-		End If
-	End If
+    If inSheetAnswer = vbYes Then
+        If Not IsEmpty(SourceBook.ActiveSheet.Cells(inSourceRow, 8).Value) And EmptyCount > 2 Then
+            SalesRepSplit = Split(SourceBook.ActiveSheet.Cells(inSourceRow, 8).Value, " ")
+            GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
+        Else
+            SalesRepSplit = Split(SourceBook.ActiveSheet.Cells(inSourceRow, 7).Value, " ")
+            GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
+        End If
+    Else
+        GetRepName = InputBox("Please enter the name of the Sales Representative" & vbNewLine & "associated with this contract." & vbNewLine & "Contract Number: " & ContractNo, "Sales Representative Name")
+        If GetRepName = vbNullString Then
+            Call ResetSettings
+            End
+        ElseIf GetRepName Like "*[0-9]*" Then
+            MsgBox "Sorry, only letters are allowed in a Sales Representative's name." & vbNewLine & "Please enter the Representative's name with this format:" & vbNewLine & "FirstName LastName", , "Invalid Character"
+            GetRepName = vbNullString
+        ElseIf InStr(GetRepName, " ") = 0 Then
+            MsgBox "Please enter the Representative's name with this format:" & vbNewLine & "FirstName LastName", , "Missing Space"
+            GetRepName = vbNullString
+        Else
+        End If
+    End If
 Loop
 
 GetRepName = StrConv(Trim(GetRepName), vbProperCase)
@@ -246,7 +246,7 @@ NonEnd = inNonBook.ActiveSheet.Range("N" & inNonBook.ActiveSheet.Rows.Count).End
 NonStart = FindFirstInstanceWhole("Product", inNonBook.ActiveSheet).Offset(1, 0).Row
 OnEnd = inBook.ActiveSheet.Range("N" & inBook.ActiveSheet.Rows.Count).End(xlUp).Offset(1, 0).Row
 
-If NonStart <> NonEnd Then inBook.ActiveSheet.Cells(OnEnd,1).Offset(1, 0).Value = inNonBook.ActiveSheet.Range(Cells(NonStart, 1), Cells(NonEnd, 22)).Value
+If NonStart <> NonEnd Then inBook.ActiveSheet.Cells(OnEnd, 1).Offset(1, 0).Value = inNonBook.ActiveSheet.Range(Cells(NonStart, 1), Cells(NonEnd, 22)).Value
 
 End Sub
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -298,7 +298,7 @@ If SheetAnswer = vbYes Then 'If there is a source sheet
     With SourceBook.ActiveSheet.Cells(SourceContractRow, 9)
         .NumberFormat = "mm/dd/yyyy hh:mm:ss"
         .Value = Now
-        .Cells.Columns.AutoFit
+        .Cells.Columns.autofit
     End With
 
 
@@ -351,25 +351,25 @@ EmailBody = "Hello " & InFirstName & "," & "<p>Please see the attached contract 
 On Error Resume Next
 
 With OutMail
-	.DeferredDeliveryTime = InSendTime
-	If InSalesRep = "House Account" Then
-		.To = "Andrea Bresnahan"
-	Else
-		.To = InSalesRep
-	End If
-	If InSalesRep = "Jim Condon" Or InSalesRep = "Kevin Dillon" Or InSalesRep = "Jack Kraemer" Or InSalesRep = "Brent Brenner" Or InSalesRep = "Matt Wierman" Or InSalesRep = "Brad Pederson" Then
-		.CC = "Paul Larson"
-	Else
-		.CC = vbNullString
-	End If
-	.BCC = vbNullString
-	.Subject = InContract & " Contract Renewal"
-	.HTMLBody = EmailBody
-	.Attachments.Add TextBook.FullName
-	'You can add other files also like this
-	'.Attachments.Add ("C:\test.txt")
-	'.Send   'or use .Display
-	.Display
+    .DeferredDeliveryTime = InSendTime
+    If InSalesRep = "House Account" Then
+        .To = "Andrea Bresnahan"
+    Else
+        .To = InSalesRep
+    End If
+    If InSalesRep = "Jim Condon" Or InSalesRep = "Kevin Dillon" Or InSalesRep = "Jack Kraemer" Or InSalesRep = "Brent Brenner" Or InSalesRep = "Matt Wierman" Or InSalesRep = "Brad Pederson" Then
+        .CC = "Paul Larson"
+    Else
+        .CC = vbNullString
+    End If
+    .BCC = vbNullString
+    .Subject = InContract & " Contract Renewal"
+    .HTMLBody = EmailBody
+    .Attachments.Add TextBook.FullName
+    'You can add other files also like this
+    '.Attachments.Add ("C:\test.txt")
+    '.Send   'or use .Display
+    .Display
 End With
 
 On Error GoTo 0
@@ -384,9 +384,9 @@ InSendTime = DateAdd("n", 3, InSendTime)
 If Hour(InSendTime) >= 17 Then InSendTime = DateAdd("h", 15, InSendTime)
 'Avoids sending emails on the weekend
 If Weekday(InSendTime, vbSunday) = 1 Then
-	InSendTime = DateAdd("d", 1, InSendTime)
+    InSendTime = DateAdd("d", 1, InSendTime)
 ElseIf Weekday(InSendTime, vbSunday) = 7 Then
-	InSendTime = DateAdd("d", 2, InSendTime)
+    InSendTime = DateAdd("d", 2, InSendTime)
 End If
 
 EmailXslxFiles = InSendTime
@@ -489,14 +489,13 @@ If Range("K1") <> "Prepared" Then
     With Cells(1, 9)
         .Value = "Time Processed"
         .Interior.Color = 12632256
-        .Font.Name = "Tahoma"
     End With
     Range("I:I").Borders.LineStyle = xlContinuous
     With Range("K1")
         .Value = "Prepared"
-        .Font.Name = "Tahoma"
     End With
-    Cells.Columns.AutoFit
+    Cells.Font.Name = "Tahoma"
+    Cells.Columns.autofit
     ActiveWorkbook.Save
 
 End If
@@ -612,21 +611,21 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
     Set TxtWorkbook = ActiveWorkbook
 
-	ContractNumber = GetContract(TxtWorkbook)
+    ContractNumber = GetContract(TxtWorkbook)
 
-	Rep = GetRepName
+    Rep = GetRepName(SpreadSheetAnswer,)
 
-	If Rep = "Teri Sprtel" Then
-		'Searches for "NON" file, and if one exists merge the NON and the regular file.
-		NonWorkbook = ContractNumber & "NON.txt"
+    If Rep = "Teri Sprtel" Then
+        'Searches for "NON" file, and if one exists merge the NON and the regular file.
+        NonWorkbook = ContractNumber & "NON.txt"
 
-		If Len(Dir(NonWorkbook)) <> vbNullString Then
-			Workbooks.OpenText NonWorkbook
-			Call MergeBooks(TxtWorkbook, NonWorkbook)
-			Call CloseXslxFiles(NonWorkbook)
-		End If
+        If Len(Dir(NonWorkbook)) <> vbNullString Then
+            Workbooks.OpenText NonWorkbook
+            Call MergeBooks(TxtWorkbook, NonWorkbook)
+            Call CloseXslxFiles(NonWorkbook)
+        End If
 
-	End If
+    End If
 
     Call Formatting(TxtWorkbook)
 
