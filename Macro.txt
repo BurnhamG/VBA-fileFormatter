@@ -201,22 +201,33 @@ SetPath = inPath
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function GetRepName(inSheetAnswer, inSourceRow)
+Function GetRepName(inSheetAnswer As String, inSourceRow, inSourceBook As Workbook)
 'Gets the name of the sales representative
 
+Dim CurrentCell
+Dim EmptyCount
 Dim SalesRepSplit
+
+If IsEmpty(inSourceBook.ActiveSheet.Cells(inSourceRow(1) + 1, 2).Value) Then
+    Set CurrentCell = Cells(inSourceRow(1) + 1, 2)
+    EmptyCount = 1
+    If IsEmpty(CurrentCell.Offset(1, 0)) Then
+            CurrentCell = CurrentCell.Offset(1, 0)
+            EmptyCount = EmptyCount + 1
+    End If
+End If
 
 Do While GetRepName Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True 'Can't escape unless name is valid
     If inSheetAnswer = vbYes Then
-        If Not IsEmpty(SourceBook.ActiveSheet.Cells(inSourceRow, 8).Value) And EmptyCount > 2 Then
-            SalesRepSplit = Split(SourceBook.ActiveSheet.Cells(inSourceRow, 8).Value, " ")
+        If Not IsEmpty(inSourceBook.ActiveSheet.Cells(inSourceRow(1), 8).Value) And EmptyCount > 2 Then
+            SalesRepSplit = Split(inSourceBook.ActiveSheet.Cells(inSourceRow(1), 8).Value, " ")
             GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
         Else
-            SalesRepSplit = Split(SourceBook.ActiveSheet.Cells(inSourceRow, 7).Value, " ")
+            SalesRepSplit = Split(inSourceBook.ActiveSheet.Cells(inSourceRow(1), 7).Value, " ")
             GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
         End If
     Else
-        GetRepName = InputBox("Please enter the name of the Sales Representative" & vbNewLine & "associated with this contract." & vbNewLine & "Contract Number: " & ContractNo, "Sales Representative Name")
+        GetRepName = InputBox("Please enter the name of the Sales Representative" & vbNewLine & "associated with this contract." & vbNewLine & "Contract Number: " & inSourceRow(2), "Sales Representative Name")
         If GetRepName = vbNullString Then
             Call ResetSettings
             End
@@ -269,23 +280,25 @@ If Right(GetContract, 1) = "," Then GetContract = Left(GetContract, Len(GetContr
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function SourceContractRow(inSourceBook As Workbook, inSheetAnswer As String, inContractNo As String)
+Function SourceContractRow(inSourceBook As Workbook, inSheetAnswer As String, inContractNo As String) As Variant
+
+Dim TempArray
 
 If inSheetAnswer = vbYes Then 'If there is a source sheet
 
-    SourceContractRow(1) = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet).Row
-    SourceContractRow(2) = inContractNo & " " & Trim(inSourceBook.ActiveSheet.Cells(SourceContractRow, 2).Value)
+    TempArray(1) = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet).Row
+    TempArray(2) = inContractNo & " " & Trim(inSourceBook.ActiveSheet.Cells(SourceContractRow, 2).Value)
 
 End If
 
+SourceContractRow = TempArray
+
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function SaveXlsxFiles(SourceBook As Workbook, TextBook As Workbook, SheetAnswer As String, ContractNo As String, inRep As String, SourceRow As String)
+Function SaveXlsxFiles(SourceBook As Workbook, TextBook As Workbook, SheetAnswer As String, ContractNo As String, inRep As String, SourceRow)
 'Saves the file using the contract name and the sales rep name
 
 Dim ContractAndRep(1 To 3) As String
-Dim CurrentCell As Range
-Dim EmptyCount As Long
 Dim FirstName As String
 Dim SaveName As String
 Dim SavePath As String
@@ -294,21 +307,12 @@ Dim SpacePlace As Long
 If SheetAnswer = vbYes Then 'If there is a source sheet
 
     'SourceRow = SourceContractRow(SheetAnswer, ContractNo)
-    SaveName = SourceContractRow(2)
-
-    If IsEmpty(SourceBook.ActiveSheet.Cells(SourceRow(1) + 1, 2).Value) Then
-        Set CurrentCell = Cells(SourceRow(1) + 1, 2)
-        EmptyCount = 1
-        If IsEmpty(CurrentCell.Offset(1, 0)) Then
-                CurrentCell = CurrentCell.Offset(1, 0)
-                EmptyCount = EmptyCount + 1
-        End If
-    End If
+    SaveName = SourceRow(2)
 
     With SourceBook.ActiveSheet.Cells(SourceRow(1), 9)
         .NumberFormat = "mm/dd/yyyy hh:mm:ss"
         .Value = Now
-        .Cells.Columns.autofit
+        .Cells.Columns.AutoFit
     End With
 
 
@@ -505,7 +509,7 @@ If Range("K1") <> "Prepared" Then
         .Value = "Prepared"
     End With
     Cells.Font.Name = "Tahoma"
-    Cells.Columns.autofit
+    Cells.Columns.AutoFit
     ActiveWorkbook.Save
 
 End If
@@ -624,9 +628,9 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
     ContractNumber = GetContract(TxtWorkbook)
 
-    SourceConRow = SourceContractRow(SpreadSheetAnswer, ContractNumber)
+    SourceConRow = SourceContractRow(SourceWorkbook, SpreadSheetAnswer, ContractNumber)
 
-    Rep = GetRepName(SpreadSheetAnswer, SourceConRow(1))
+    Rep = GetRepName(SpreadSheetAnswer, SourceConRow(1), SourceWorkbook)
 
     If Rep = "Teri Sprtel" Then
         'Searches for "NON" file, and if one exists merge the NON and the regular file.
