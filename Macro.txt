@@ -208,22 +208,21 @@ Dim CurrentCell
 Dim EmptyCount
 Dim SalesRepSplit
 
-If IsEmpty(inSourceBook.ActiveSheet.Cells(inSourceRow(1) + 1, 2).Value) Then
-    Set CurrentCell = Cells(inSourceRow(1) + 1, 2)
-    EmptyCount = 1
-    If IsEmpty(CurrentCell.Offset(1, 0)) Then
-            CurrentCell = CurrentCell.Offset(1, 0)
-            EmptyCount = EmptyCount + 1
-    End If
-End If
-
 Do While GetRepName Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True 'Can't escape unless name is valid
     If inSheetAnswer = vbYes Then
-        If Not IsEmpty(inSourceBook.ActiveSheet.Cells(inSourceRow(1), 8).Value) And EmptyCount > 2 Then
-            SalesRepSplit = Split(inSourceBook.ActiveSheet.Cells(inSourceRow(1), 8).Value, " ")
+		If IsEmpty(inSourceBook.ActiveSheet.Cells(inSourceRow + 1, 2).Value) Then
+		Set CurrentCell = Cells(inSourceRow(1) + 1, 2)
+		EmptyCount = 1
+			If IsEmpty(CurrentCell.Offset(1, 0)) Then
+				CurrentCell = CurrentCell.Offset(1, 0)
+				EmptyCount = EmptyCount + 1
+			End If
+		End If
+        If Not IsEmpty(inSourceBook.ActiveSheet.Cells(inSourceRow, 8).Value) And EmptyCount > 2 Then
+            SalesRepSplit = Split(inSourceBook.ActiveSheet.Cells(inSourceRow, 8).Value, " ")
             GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
         Else
-            SalesRepSplit = Split(inSourceBook.ActiveSheet.Cells(inSourceRow(1), 7).Value, " ")
+            SalesRepSplit = Split(inSourceBook.ActiveSheet.Cells(inSourceRow, 7).Value, " ")
             GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
         End If
     Else
@@ -257,7 +256,7 @@ NonEnd = inNonBook.ActiveSheet.Range("N" & inNonBook.ActiveSheet.Rows.Count).End
 NonStart = FindFirstInstanceWhole("Product", inNonBook.ActiveSheet).Offset(1, 0).Row
 OnEnd = inBook.ActiveSheet.Range("N" & inBook.ActiveSheet.Rows.Count).End(xlUp).Offset(1, 0).Row
 
-If NonStart <> NonEnd Then inBook.ActiveSheet.Cells(OnEnd, 1).Offset(1, 0).Value = inNonBook.ActiveSheet.Range(Cells(NonStart, 1), Cells(NonEnd, 22)).Value
+If NonStart <> NonEnd Then inBook.ActiveSheet.Range(inBook.ActiveSheet.Cells(OnEnd, 1), inBook.ActiveSheet.Cells(OnEnd + (NonEnd - NonStart), 22)).Value = inNonBook.ActiveSheet.Range(inNonBook.ActiveSheet.Cells(NonStart, 1), inNonBook.ActiveSheet.Cells(NonEnd, 22)).Value
 
 End Sub
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -282,12 +281,17 @@ End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 Function SourceContractRow(inSourceBook As Workbook, inSheetAnswer As String, inContractNo As String) As Variant
 
-Dim TempArray
+Dim TempOne As String
+Dim TempTwo As String
+Dim TempArray(1 To 2) As Variant
 
 If inSheetAnswer = vbYes Then 'If there is a source sheet
 
-    TempArray(1) = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet).Row
-    TempArray(2) = inContractNo & " " & Trim(inSourceBook.ActiveSheet.Cells(SourceContractRow, 2).Value)
+    TempOne = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet).Row
+    TempTwo = inContractNo & " " & Trim(inSourceBook.ActiveSheet.Cells(TempOne, 2).Value)
+
+    TempArray(1) = TempOne
+    TempArray(2) = TempTwo
 
 End If
 
@@ -295,7 +299,7 @@ SourceContractRow = TempArray
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function SaveXlsxFiles(SourceBook As Workbook, TextBook As Workbook, SheetAnswer As String, ContractNo As String, inRep As String, SourceRow)
+Function SaveXlsxFiles(SourceBook As Workbook, TextBook As Workbook, SheetAnswer As String, ContractNo As String, inRep As String, SourceRow, SourceName)
 'Saves the file using the contract name and the sales rep name
 
 Dim ContractAndRep(1 To 3) As String
@@ -307,12 +311,12 @@ Dim SpacePlace As Long
 If SheetAnswer = vbYes Then 'If there is a source sheet
 
     'SourceRow = SourceContractRow(SheetAnswer, ContractNo)
-    SaveName = SourceRow(2)
+    SaveName = SourceName
 
-    With SourceBook.ActiveSheet.Cells(SourceRow(1), 9)
+    With SourceBook.ActiveSheet.Cells(SourceRow, 9)
         .NumberFormat = "mm/dd/yyyy hh:mm:ss"
         .Value = Now
-        .Cells.Columns.AutoFit
+        .Cells.Columns.autofit
     End With
 
 
@@ -429,10 +433,14 @@ TxtPath = Dir(FilesLoc & "*.txt")
 'Structure from http://www.java2s.com/Code/VBA-Excel-Access-Word/File-Path/Usearraytostorealistoffiles.htm
 
 Do While TxtPath <> vbNullString
-    I = I + 1
-    ReDim Preserve InTxtList(1 To I)
-    InTxtList(I) = TxtPath
-    TxtPath = Dir
+	If Not TxtPath Like "*NON.txt" Then
+		I = I + 1
+		ReDim Preserve InTxtList(1 To I)
+		InTxtList(I) = TxtPath
+		TxtPath = Dir
+	Else
+		I = I + 1
+	End If
 Loop
 
 GetFileNames = InTxtList
@@ -509,7 +517,7 @@ If Range("K1") <> "Prepared" Then
         .Value = "Prepared"
     End With
     Cells.Font.Name = "Tahoma"
-    Cells.Columns.AutoFit
+    Cells.Columns.autofit
     ActiveWorkbook.Save
 
 End If
@@ -562,12 +570,13 @@ Dim Email As Integer
 Dim EmailAnswer As Integer
 Dim Files As Long
 Dim NonWorkbook As Workbook
+Dim NonWorkbookPath As String
 Dim Path As String
 Dim Rep As String
 Dim SecondsElapsed As Double
 Dim SendTime As Date
 Dim ShouldMove As Integer
-Dim SourceConRow() As String
+Dim SourceConRow As Variant
 Dim SourceWorkbook As Workbook
 Dim SpreadSheetAnswer As String
 Dim StartTime As Double
@@ -633,20 +642,22 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
     Rep = GetRepName(SpreadSheetAnswer, SourceConRow(1), SourceWorkbook)
 
     If Rep = "Teri Sprtel" Then
-        'Searches for "NON" file, and if one exists merge the NON and the regular file.
-        NonWorkbook = ContractNumber & "NON.txt"
+        'Searches for "NON" file, and if one exists merges the NON and the regular file.
+        NonWorkbookPath = Path & ContractNumber & "NON.txt"
 
-        If Len(Dir(NonWorkbook)) <> vbNullString Then
-            Workbooks.OpenText NonWorkbook
+        If Len(Dir(NonWorkbookPath)) <> 0 Then
+            Workbooks.OpenText NonWorkbookPath
+            Set NonWorkbook = ActiveWorkbook
             Call MergeBooks(TxtWorkbook, NonWorkbook)
             Call CloseXslxFiles(NonWorkbook)
+			Call MoveProcessedFiles(NonWorkbookPath)
         End If
 
     End If
 
     Call Formatting(TxtWorkbook)
 
-    ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, ContractNumber, Rep, SourceConRow(1))
+    ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, ContractNumber, Rep, SourceConRow(1), SourceConRow(2))
 
     If Email = 1 Then SendTime = EmailXslxFiles(ContractAndRepArray(1), ContractAndRepArray(2), ContractAndRepArray(3), SendTime, TxtWorkbook)
 
