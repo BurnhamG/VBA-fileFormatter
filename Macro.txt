@@ -12,17 +12,17 @@ SpreadSheetPath = SetPath(SpreadSheetPath)
 SpreadSheetFile = Dir(SpreadSheetPath & "*.xlsx")
 
 Do
-	CorrectSheet = MsgBox("Is """ & SpreadSheetFile & """ the correct file?", vbYesNo + vbQuestion + vbMsgBoxSetForeground, "Correct?")
+    CorrectSheet = MsgBox("Is """ & SpreadSheetFile & """ the correct file?", vbYesNo + vbQuestion + vbMsgBoxSetForeground, "Correct?")
 
-	Do
+    Do
 
-		If CorrectSheet = vbYes Then
-			SetSpreadsheet = SpreadSheetPath & "\" & SpreadSheetFile
-		Else
-			SpreadSheetFile = Dir
-		End If
+        If CorrectSheet = vbYes Then
+            SetSpreadsheet = SpreadSheetPath & "\" & SpreadSheetFile
+        Else
+            SpreadSheetFile = Dir
+        End If
 
-	Loop Until SetSpreadsheet <> ""
+    Loop Until SetSpreadsheet <> ""
 
 Loop While CorrectSheet <> vbYes
 
@@ -211,7 +211,7 @@ ElseIf Len(Dir(inPath, vbDirectory)) = 0 Then
 
     MakePathAnswer = MsgBox("Sorry, that path does not exist." & vbNewLine & "Would you like to create this path?", vbYesNo + vbQuestion + vbMsgBoxSetForeground, "Create directory?")
 
-	If MakePathAnswer = vbYes Then
+    If MakePathAnswer = vbYes Then
 
         Call MakeAllDirs(inPath)
 
@@ -229,7 +229,7 @@ SetPath = inPath
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function GetRepName(inSheetAnswer As String, inSourceRow, inSourceBook As Workbook)
+Function GetRepName(inSheetAnswer As String, inSourceRow, inSourceBook As Workbook, inContractNo As String)
 'Gets the name of the sales representative from the source workbook
 
 Dim CurrentCell
@@ -240,37 +240,37 @@ Do While GetRepName Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True 'Can't escape unless na
 
     If inSheetAnswer = vbYes Then
 
-		If IsEmpty(inSourceBook.ActiveSheet.Cells(inSourceRow + 1, 2).Value) Then 'This counts how many different companies fall under the same contract
+        If IsEmpty(inSourceBook.ActiveSheet.Cells(inSourceRow + 1, 2).Value) Then 'This counts how many different companies fall under the same contract
 
-			Set CurrentCell = Cells(inSourceRow(1) + 1, 2)
-			EmptyCount = 1
+            Set CurrentCell = Cells(inSourceRow + 1, 2)
+            EmptyCount = 1
 
-			If IsEmpty(CurrentCell.Offset(1, 0)) Then
+            If IsEmpty(CurrentCell.Offset(1, 0)) Then
 
-				CurrentCell = CurrentCell.Offset(1, 0)
-				EmptyCount = EmptyCount + 1
+                CurrentCell = CurrentCell.Offset(1, 0)
+                EmptyCount = EmptyCount + 1
 
-			End If
+            End If
 
-		End If
+        End If
 
         If Not IsEmpty(inSourceBook.ActiveSheet.Cells(inSourceRow, 8).Value) And EmptyCount > 2 Then 'If there are more than two companies on the same contract, then the main owner receives the email
 
-            SalesRepSplit = Split(inSourceBook.ActiveSheet.Cells(inSourceRow, 8).Value, " ")
+            SalesRepSplit = Split(Trim(inSourceBook.ActiveSheet.Cells(inSourceRow, 8)).Value, " ")
             GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
 
         Else 'Otherwise the sales representative gets the email
 
-            SalesRepSplit = Split(inSourceBook.ActiveSheet.Cells(inSourceRow, 7).Value, " ")
+            SalesRepSplit = Split(Trim(inSourceBook.ActiveSheet.Cells(inSourceRow, 7).Value), " ")
             GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
 
         End If
 
     Else 'This runs if there is no source spreadsheet
 
-        GetRepName = InputBox("Please enter the name of the Sales Representative" & vbNewLine & "associated with this contract." & vbNewLine & "Contract Number: " & inSourceRow(2), "Sales Representative Name")
+        GetRepName = InputBox("Please enter the name of the Sales Representative" & vbNewLine & "associated with this contract." & vbNewLine & "Contract Number: " & inContractNo, "Sales Representative Name")
 
-	   If GetRepName = vbNullString Then
+       If GetRepName = vbNullString Then
 
             Call ResetSettings
             End
@@ -285,7 +285,7 @@ Do While GetRepName Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True 'Can't escape unless na
             MsgBox "Please enter the Representative's name with this format:" & vbNewLine & "FirstName LastName", , "Missing Space"
             GetRepName = vbNullString
 
-		End If
+        End If
 
     End If
 
@@ -321,7 +321,7 @@ TxtContractSplit = Split(TextBook.ActiveSheet.Range("A3").Value, ",")
 'This block checks for a text file that only has one contract listed and then splits by space in order to get the correct value
 If UBound(TxtContractSplit, 1) - LBound(TxtContractSplit, 1) + 1 <= 2 Then
 
-	TxtContractSplit = Split(TextBook.ActiveSheet.Range("A3").Value, " ")
+    TxtContractSplit = Split(TextBook.ActiveSheet.Range("A3").Value, " ")
     GetContract = Trim(TxtContractSplit(1))
 
 Else
@@ -350,7 +350,7 @@ SourceContractRow = TempArray
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function SaveXlsxFiles(SourceBook As Workbook, TextBook As Workbook, SheetAnswer As String, ContractNo As String, inRep As String, SourceRow, SourceName)
+Function SaveXlsxFiles(SourceBook As Workbook, TextBook As Workbook, SheetAnswer As String, ContractNo As String, inRep As String, SourceRow, SourceName, inPath As String)
 'Saves the file using the contract name and the sales rep name
 
 Dim ContractAndRep(1 To 3) As String
@@ -363,7 +363,7 @@ If SheetAnswer = vbYes Then 'If there is a source sheet
 
     SaveName = SourceName
 
-	'This sets the current time as when the file was processed
+    'This sets the current time as when the file was processed
     With SourceBook.ActiveSheet.Cells(SourceRow, 9)
         .NumberFormat = "mm/dd/yyyy hh:mm:ss"
         .Value = Now
@@ -376,7 +376,7 @@ Else 'No source sheet
     SaveName = Trim(TextBook.ActiveSheet.Range("A2").Value)
     SpacePlace = InStr(1, SaveName, " ", vbTextCompare)
 
-	'This checks for mismatched contract numbers, and alerts the user to identify the correct number
+    'This checks for mismatched contract numbers, and alerts the user to identify the correct number
     If ContractNo <> Trim(Left(SaveName, SpacePlace)) Then
 
         SaveName = InputBox("Contract numbers do not match." & vbNewLine & "Please enter the contract number and name.", "Contract Number and Name")
@@ -387,12 +387,15 @@ Else 'No source sheet
 
 End If
 
+SaveName = Replace(SaveName, "/", "-")
 SpacePlace = InStr(1, inRep, " ", vbTextCompare)
 FirstName = Trim(Left(inRep, SpacePlace))
 
 ContractAndRep(1) = ContractNo
 ContractAndRep(2) = inRep
 ContractAndRep(3) = FirstName
+
+SavePath = inPath & "Contract Renewals\" & ContractAndRep(2) & "\"
 
 If Len(Dir(SavePath, vbDirectory)) = 0 Then Call MakeAllDirs(SavePath)
 
@@ -438,7 +441,7 @@ With OutMail
 
     If InSalesRep = "Jim Condon" Or InSalesRep = "Kevin Dillon" Or InSalesRep = "Jack Kraemer" Or InSalesRep = "Brent Brenner" Or InSalesRep = "Matt Wierman" Or InSalesRep = "Brad Pederson" Then
 
-        .CC = "Paul Larson"
+        '.CC = "Paul Larson" 'ADD THIS BACK AUGUST 28!!!!!!!!!!!
 
     Else
 
@@ -452,8 +455,8 @@ With OutMail
     .Attachments.Add TextBook.FullName
     'You can add other files also like this
     '.Attachments.Add ("C:\test.txt")
-    '.Send   'or use .Display
-    .Display
+    .Send   'or use .Display
+    '.Display
 
 End With
 
@@ -507,18 +510,18 @@ TxtPath = Dir(FilesLoc & "*.txt")
 
 Do While TxtPath <> vbNullString
 
-	If Not TxtPath Like "*NON.txt" Then
+    If Not LCase(TxtPath) Like LCase("*NON.txt") Then
 
-		I = I + 1
-		ReDim Preserve InTxtList(1 To I)
-		InTxtList(I) = TxtPath
-		TxtPath = Dir
+        I = I + 1
+        ReDim Preserve InTxtList(1 To I)
+        InTxtList(I) = TxtPath
+        TxtPath = Dir
 
-	Else
+    Else
 
-		I = I + 1
+        TxtPath = Dir
 
-	End If
+    End If
 
 Loop
 
@@ -551,7 +554,7 @@ Dim Rng As Range
 
 If Range("K1") <> "Prepared" Then
 
-	'This fixes the partial name of Michelle Salverson
+    'This fixes the partial name of Michelle Salverson
     Cells.Replace What:="Salvers", Replacement:="SALVERSON", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=True
 
     'These are the values that the next block searches for
@@ -565,7 +568,7 @@ If Range("K1") <> "Prepared" Then
             'If you want to find a part of the rng.value then use xlPart
             'if you use LookIn:=xlValues it will also work with a
             'formula cell that evaluates to the search term.
-			'This next block searches for the values in the above array
+            'This next block searches for the values in the above array
 
             Set Rng = .Find(What:=NamesArr(I), _
                             After:=.Cells(.Cells.Count), _
@@ -622,7 +625,7 @@ Dim FSO As Object
 Dim FromPath As String
 Dim ToPath As String
 
-FromPath = inPath & "Contract Renewals\"
+FromPath = inPath & "Contract Renewals\*"
 ToPath = "S:\Contract Reviews\"
 
 Set FSO = CreateObject("scripting.filesystemobject")
@@ -733,20 +736,20 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
     'Opens the file
     Workbooks.OpenText Filename:=Path & TxtList(ArrPos)
 
-	'Identifies the workbook to be formatted
+    'Identifies the workbook to be formatted
     Set TxtWorkbook = ActiveWorkbook
 
-	'Gets the contract number
+    'Gets the contract number
     ContractNumber = GetContract(TxtWorkbook)
 
-	'Locates the contract in the source workbook, if one exists
+    'Locates the contract in the source workbook, if one exists
     If SpreadSheetAnswer = vbYes Then SourceConRow = SourceContractRow(SourceWorkbook, SpreadSheetAnswer, ContractNumber)
 
-    Rep = GetRepName(SpreadSheetAnswer, SourceConRow(1), SourceWorkbook)
+    Rep = GetRepName(SpreadSheetAnswer, SourceConRow(1), SourceWorkbook, ContractNumber)
 
     If Rep = "Teri Sprtel" Then
 
-	   'This block searches for "NON" file, and if one exists merges the NON and the regular file.
+       'This block searches for "NON" file, and if one exists merges the NON and the regular file.
         NonWorkbookPath = Path & ContractNumber & "NON.txt"
 
         If Len(Dir(NonWorkbookPath)) <> 0 Then
@@ -755,7 +758,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
             Set NonWorkbook = ActiveWorkbook
             Call MergeBooks(TxtWorkbook, NonWorkbook)
             Call CloseXslxFiles(NonWorkbook)
-			Call MoveProcessedFiles(NonWorkbookPath)
+            Call MoveProcessedFiles(NonWorkbookPath)
 
         End If
 
@@ -763,7 +766,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
     Call Formatting(TxtWorkbook)
 
-    ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, ContractNumber, Rep, SourceConRow(1), SourceConRow(2))
+    ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, ContractNumber, Rep, SourceConRow(1), SourceConRow(2), Path)
 
     If Email = 1 Then SendTime = EmailXslxFiles(ContractAndRepArray(1), ContractAndRepArray(2), ContractAndRepArray(3), SendTime, TxtWorkbook)
 
@@ -786,6 +789,7 @@ MsgBox "This code processed " & Files & " files in " & SecondsElapsed & " second
 
 Call ResetSettings
 
+'FIGURE OUT WHY THIS DOESN'T WORK!!!!!!!!!!!!!!!!!!!!!!!!!! It throws an error about a path not being found
 ShouldMove = MsgBox("Would you like to move the processed .xslx files to the appropriate folder?", vbYesNo, "Move Spreadsheets?")
 
 If ShouldMove = vbYes Then Call MoveSpreadsheets(Path)
