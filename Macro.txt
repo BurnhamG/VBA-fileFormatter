@@ -232,8 +232,9 @@ End Function
 Function GetRepName(inSheetAnswer As String, inSourceRow, inSourceBook As Workbook, inContractNo As String)
 'Gets the name of the sales representative from the source workbook
 
+Dim Attempts As Integer
 Dim CurrentCell
-Dim EmptyCount
+Dim EmptyCount As Long
 Dim SalesRepSplit
 
 Do While GetRepName Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True 'Can't escape unless name is valid
@@ -266,6 +267,8 @@ Do While GetRepName Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True 'Can't escape unless na
 
         End If
 
+		Attempts = Attempts + 1
+
     Else 'This runs if there is no source spreadsheet
 
         GetRepName = InputBox("Please enter the name of the Sales Representative" & vbNewLine & "associated with this contract." & vbNewLine & "Contract Number: " & inContractNo, "Sales Representative Name")
@@ -288,6 +291,14 @@ Do While GetRepName Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True 'Can't escape unless na
         End If
 
     End If
+
+	If Attempts = 3 Then
+
+		MsgBox "A valid sales representative name was not found"
+		Call ResetSettings
+		End
+
+	End If
 
 Loop
 
@@ -387,7 +398,7 @@ Else 'No source sheet
 
 End If
 
-SaveName = Replace(SaveName, "/", "-")
+SaveName = Replace(SaveName, "/", "-") 'Removes any forward slashes
 SpacePlace = InStr(1, inRep, " ", vbTextCompare)
 FirstName = Trim(Left(inRep, SpacePlace))
 
@@ -465,11 +476,23 @@ On Error GoTo 0
 Set OutMail = Nothing
 Set OutApp = Nothing
 
+If SheetAnswer = vbYes Then 'If there is a source sheet
+
+    SaveName = SourceName
+
+    'This logs when the contract was actually sent
+    With SourceBook.ActiveSheet.Cells(SourceRow, 10)
+        .NumberFormat = "mm/dd/yyyy hh:mm:ss"
+        .Value = InSendTime
+        .Cells.Columns.autofit
+    End With
+
+
 'Sets up delayed delivery so as to not flood the system
-InSendTime = DateAdd("n", 3, InSendTime)
+InSendTime = DateAdd("n", 5, InSendTime)
 
 'Avoids sending emails after 1700 hours
-If Hour(InSendTime) >= 17 Then InSendTime = DateAdd("h", 15, InSendTime)
+If Hour(InSendTime) >= 17 Then InSendTime = DateAdd("n", 940, InSendTime)
 
 'Avoids sending emails on the weekend
 If Weekday(InSendTime, vbSunday) = 1 Then
@@ -603,11 +626,14 @@ If Range("K1") <> "Prepared" Then
         .Interior.Color = 12632256
     End With
 
-    Range("I:I").Borders.LineStyle = xlContinuous
+	With Cells(1,10)
+		.Value = "Time Sent"
+		.Interior.Color = 12632256
+	End With
 
-    With Range("K1")
-        .Value = "Prepared"
-    End With
+    Range("I:J").Borders.LineStyle = xlContinuous
+
+    Range("K1").Value = "Prepared"
 
     Cells.Font.Name = "Tahoma"
     Cells.Columns.autofit
@@ -719,6 +745,7 @@ ValidDir = VerifyTextFile(TxtList, Path)
 'This resets settings and exits the macro if no text files are found in the directory
 If ValidDir = vbNullString Then
 
+	MsgBox "No text files were found."
     Call ResetSettings
     Exit Sub
 
@@ -727,8 +754,10 @@ End If
 'Remember time when macro starts
 StartTime = Timer
 
-'Set time for sending emails
-SendTime = Now
+'Gets the last time that an email is scheduled to be sent and adds 5 minutes
+If SpreadSheetAnswer = vbYes Then SendTime = DateAdd("n", 5, Application.WorksheetFunction.Max(ActiveWorkbook.ActiveSheet.Range("J:J")))
+
+If SendTime < Now Then SendTime = Now 'Checks if there wasn't already a date in the sent time column, or if the send time was in the past
 
 'This is what actually formats, saves, and emails the files
 For ArrPos = LBound(TxtList) To UBound(TxtList)
@@ -741,6 +770,17 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
     'Gets the contract number
     ContractNumber = GetContract(TxtWorkbook)
+
+	'Error handling
+	If ContractNumber = 0 Then
+
+		SecondsElapsed = Round(Timer - StartTime, 2)
+		Call ResetSettings
+		MsgBox "Contract number was 0, please check text file."
+		MsgBox "This code processed " & Files & " files in " & SecondsElapsed & " seconds.", vbInformation
+		End
+
+	End If
 
     'Locates the contract in the source workbook, if one exists
     If SpreadSheetAnswer = vbYes Then SourceConRow = SourceContractRow(SourceWorkbook, SpreadSheetAnswer, ContractNumber)
@@ -789,7 +829,6 @@ MsgBox "This code processed " & Files & " files in " & SecondsElapsed & " second
 
 Call ResetSettings
 
-'FIGURE OUT WHY THIS DOESN'T WORK!!!!!!!!!!!!!!!!!!!!!!!!!! It throws an error about a path not being found
 ShouldMove = MsgBox("Would you like to move the processed .xslx files to the appropriate folder?", vbYesNo, "Move Spreadsheets?")
 
 If ShouldMove = vbYes Then Call MoveSpreadsheets(Path)
