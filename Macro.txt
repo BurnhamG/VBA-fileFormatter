@@ -420,12 +420,13 @@ SaveXlsxFiles = ContractAndRep
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function EmailXslxFiles(InContract, InSalesRep, InFirstName, InSendTime As Date, TextBook As Workbook)
+Function EmailXslxFiles(InContract, InSalesRep, InFirstName, InSendTime As Date, SourceBook As Workbook, TextBook As Workbook, inSheetAnswer As String, SourceRow, SourceName)
 'Working in Excel 2000-2016
 'This example sends the last saved version of the Activeworkbook
 'For Tips see: http://www.rondebruin.nl/win/winmail/Outlook/tips.htm
 
 Dim EmailBody As String
+Dim SaveName As String
 Dim OutApp As Object
 Dim OutMail As Object
 
@@ -476,7 +477,7 @@ On Error GoTo 0
 Set OutMail = Nothing
 Set OutApp = Nothing
 
-If SheetAnswer = vbYes Then 'If there is a source sheet
+If inSheetAnswer = vbYes Then 'If there is a source sheet
 
     SaveName = SourceName
 
@@ -487,9 +488,10 @@ If SheetAnswer = vbYes Then 'If there is a source sheet
         .Cells.Columns.autofit
     End With
 
+End If
 
 'Sets up delayed delivery so as to not flood the system
-InSendTime = DateAdd("n", 5, InSendTime)
+InSendTime = DateAdd("n", 3, InSendTime)
 
 'Avoids sending emails after 1700 hours
 If Hour(InSendTime) >= 17 Then InSendTime = DateAdd("n", 940, InSendTime)
@@ -575,7 +577,7 @@ Dim I As Long
 Dim NamesArr As Variant
 Dim Rng As Range
 
-If Range("K1") <> "Prepared" Then
+If Range("L1") <> "Prepared" Then
 
     'This fixes the partial name of Michelle Salverson
     Cells.Replace What:="Salvers", Replacement:="SALVERSON", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=True
@@ -633,7 +635,7 @@ If Range("K1") <> "Prepared" Then
 
     Range("I:J").Borders.LineStyle = xlContinuous
 
-    Range("K1").Value = "Prepared"
+    Range("L1").Value = "Prepared"
 
     Cells.Font.Name = "Tahoma"
     Cells.Columns.autofit
@@ -804,20 +806,31 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
     End If
 
-    Call Formatting(TxtWorkbook)
+	'Does not process any Jerry Julius or Chad Miller text files that may have been pulled
+	If Rep = "Jerry Julius" Or Rep = "Chad Miller" Then
 
-    ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, ContractNumber, Rep, SourceConRow(1), SourceConRow(2), Path)
+		Call CloseXslxFiles(TxtWorkbook)
 
-    If Email = 1 Then SendTime = EmailXslxFiles(ContractAndRepArray(1), ContractAndRepArray(2), ContractAndRepArray(3), SendTime, TxtWorkbook)
+		Kill Path & TxtList(ArrPos)
 
-    If SpreadSheetAnswer = vbYes Then SourceWorkbook.Save
+	Else
 
-    Call CloseXslxFiles(TxtWorkbook)
+		Call Formatting(TxtWorkbook)
 
-    'Sorts the processed files
-    Call MoveProcessedFiles(Path & TxtList(ArrPos))
+		ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, ContractNumber, Rep, SourceConRow(1), SourceConRow(2), Path)
 
-    Files = Files + 1
+		If Email = 1 Then SendTime = EmailXslxFiles(ContractAndRepArray(1), ContractAndRepArray(2), ContractAndRepArray(3), SendTime, SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, SourceConRow(1), SourceConRow(2))
+
+		If SpreadSheetAnswer = vbYes Then SourceWorkbook.Save
+
+		Call CloseXslxFiles(TxtWorkbook)
+
+		'Sorts the processed files
+		Call MoveProcessedFiles(Path & TxtList(ArrPos))
+
+	End If
+
+	Files = Files + 1
 
 Next ArrPos
 
