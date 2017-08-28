@@ -267,7 +267,7 @@ Do While GetRepName Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True 'Can't escape unless na
 
         End If
 
-		Attempts = Attempts + 1
+        Attempts = Attempts + 1
 
     Else 'This runs if there is no source spreadsheet
 
@@ -292,13 +292,13 @@ Do While GetRepName Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True 'Can't escape unless na
 
     End If
 
-	If Attempts = 3 Then
+    If Attempts = 3 Then
 
-		MsgBox "A valid sales representative name was not found"
-		Call ResetSettings
-		End
+        MsgBox "A valid sales representative name was not found"
+        Call ResetSettings
+        End
 
-	End If
+    End If
 
 Loop
 
@@ -453,7 +453,7 @@ With OutMail
 
     If InSalesRep = "Jim Condon" Or InSalesRep = "Kevin Dillon" Or InSalesRep = "Jack Kraemer" Or InSalesRep = "Brent Brenner" Or InSalesRep = "Matt Wierman" Or InSalesRep = "Brad Pederson" Then
 
-        '.CC = "Paul Larson" 'ADD THIS BACK AUGUST 28!!!!!!!!!!!
+        .CC = "Paul Larson"
 
     Else
 
@@ -628,10 +628,10 @@ If Range("L1") <> "Prepared" Then
         .Interior.Color = 12632256
     End With
 
-	With Cells(1,10)
-		.Value = "Time Sent"
-		.Interior.Color = 12632256
-	End With
+    With Cells(1, 10)
+        .Value = "Time Sent"
+        .Interior.Color = 12632256
+    End With
 
     Range("I:J").Borders.LineStyle = xlContinuous
 
@@ -747,7 +747,7 @@ ValidDir = VerifyTextFile(TxtList, Path)
 'This resets settings and exits the macro if no text files are found in the directory
 If ValidDir = vbNullString Then
 
-	MsgBox "No text files were found."
+    MsgBox "No text files were found."
     Call ResetSettings
     Exit Sub
 
@@ -773,16 +773,16 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
     'Gets the contract number
     ContractNumber = GetContract(TxtWorkbook)
 
-	'Error handling
-	If ContractNumber = 0 Then
+    'Error handling
+    If ContractNumber = "0" Or ContractNumber = vbNullString Then
 
-		SecondsElapsed = Round(Timer - StartTime, 2)
-		Call ResetSettings
-		MsgBox "Contract number was 0, please check text file."
-		MsgBox "This code processed " & Files & " files in " & SecondsElapsed & " seconds.", vbInformation
-		End
+        SecondsElapsed = Round(Timer - StartTime, 2)
+        Call ResetSettings
+        MsgBox "Contract number was 0, please check text file."
+        MsgBox "This code processed " & Files & " files in " & SecondsElapsed & " seconds.", vbInformation
+        End
 
-	End If
+    End If
 
     'Locates the contract in the source workbook, if one exists
     If SpreadSheetAnswer = vbYes Then SourceConRow = SourceContractRow(SourceWorkbook, SpreadSheetAnswer, ContractNumber)
@@ -806,31 +806,31 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
     End If
 
-	'Does not process any Jerry Julius or Chad Miller text files that may have been pulled
-	If Rep = "Jerry Julius" Or Rep = "Chad Miller" Then
+    'Does not process any Jerry Julius or Chad Miller text files that may have been pulled
+    If Rep = "Jerry Julius" Or Rep = "Chad Miller" Then
 
-		Call CloseXslxFiles(TxtWorkbook)
+        Call CloseXslxFiles(TxtWorkbook)
 
-		Kill Path & TxtList(ArrPos)
+        Kill Path & TxtList(ArrPos)
 
-	Else
+    Else
 
-		Call Formatting(TxtWorkbook)
+        Call Formatting(TxtWorkbook)
 
-		ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, ContractNumber, Rep, SourceConRow(1), SourceConRow(2), Path)
+        ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, ContractNumber, Rep, SourceConRow(1), SourceConRow(2), Path)
 
-		If Email = 1 Then SendTime = EmailXslxFiles(ContractAndRepArray(1), ContractAndRepArray(2), ContractAndRepArray(3), SendTime, SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, SourceConRow(1), SourceConRow(2))
+        If Email = 1 Then SendTime = EmailXslxFiles(ContractAndRepArray(1), ContractAndRepArray(2), ContractAndRepArray(3), SendTime, SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, SourceConRow(1), SourceConRow(2))
 
-		If SpreadSheetAnswer = vbYes Then SourceWorkbook.Save
+        If SpreadSheetAnswer = vbYes Then SourceWorkbook.Save
 
-		Call CloseXslxFiles(TxtWorkbook)
+        Call CloseXslxFiles(TxtWorkbook)
 
-		'Sorts the processed files
-		Call MoveProcessedFiles(Path & TxtList(ArrPos))
+        'Sorts the processed files
+        Call MoveProcessedFiles(Path & TxtList(ArrPos))
 
-	End If
+    End If
 
-	Files = Files + 1
+    Files = Files + 1
 
 Next ArrPos
 
