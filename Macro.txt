@@ -267,7 +267,7 @@ Do While GetRepName Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True 'Can't escape unless na
 
         End If
 
-		Attempts = Attempts + 1
+        Attempts = Attempts + 1
 
     Else 'This runs if there is no source spreadsheet
 
@@ -292,13 +292,13 @@ Do While GetRepName Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True 'Can't escape unless na
 
     End If
 
-	If Attempts = 3 Then
+    If Attempts = 3 Then
 
-		MsgBox "A valid sales representative name was not found"
-		Call ResetSettings
-		End
+        MsgBox "A valid sales representative name was not found"
+        Call ResetSettings
+        End
 
-	End If
+    End If
 
 Loop
 
@@ -628,20 +628,22 @@ If Range("L1") <> "Prepared" Then
         .Interior.Color = 12632256
     End With
 
-	With Cells(1,10)
-		.Value = "Time Sent"
-		.Interior.Color = 12632256
-	End With
+    With Cells(1, 10)
+        .Value = "Time Sent"
+        .Interior.Color = 12632256
+    End With
 
     Range("I:J").Borders.LineStyle = xlContinuous
-
+    Range("L3").Value = "Last Run:"
     Range("L1").Value = "Prepared"
 
-    Cells.Font.Name = "Tahoma"
-    Cells.Columns.autofit
-    ActiveWorkbook.Save
 
 End If
+
+Range("L2").Value = "RUNNING"
+Cells.Font.Name = "Tahoma"
+Cells.Columns.autofit
+ActiveWorkbook.Save
 
 End Sub
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -719,7 +721,7 @@ Else
 
 End If
 
-Files = 1
+Files = 0
 
 'See if there is a source spreadsheet and set its location, if one exists
 SpreadSheetAnswer = MsgBox("Do you have a source spreadsheet?", vbYesNo + vbQuestion + vbMsgBoxSetForeground, "Source Spreadsheet?")
@@ -747,7 +749,7 @@ ValidDir = VerifyTextFile(TxtList, Path)
 'This resets settings and exits the macro if no text files are found in the directory
 If ValidDir = vbNullString Then
 
-	MsgBox "No text files were found."
+    MsgBox "No text files were found."
     Call ResetSettings
     Exit Sub
 
@@ -773,64 +775,67 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
     'Gets the contract number
     ContractNumber = GetContract(TxtWorkbook)
 
-	'Error handling
-	If ContractNumber = "0" or ContractNumber = vbNullString Then
+    'Error handling
+    If Range("A2").Value = 0 Or ContractNumber = "0" Or ContractNumber = vbNullString Then
 
-		SecondsElapsed = Round(Timer - StartTime, 2)
-		Call ResetSettings
-		MsgBox "Contract number was 0, please check text file."
-		MsgBox "This code processed " & Files & " files in " & SecondsElapsed & " seconds.", vbInformation
-		End
+        Call CloseXslxFiles(TxtWorkbook)
 
-	End If
+        If Len(Dir("S:\CSR\Contract Renewal Text Files\Failed Files", vbDirectory)) = 0 Then Call MakeAllDirs("S:\CSR\Contract Renewal Text Files\Failed Files")
 
-    'Locates the contract in the source workbook, if one exists
-    If SpreadSheetAnswer = vbYes Then SourceConRow = SourceContractRow(SourceWorkbook, SpreadSheetAnswer, ContractNumber)
+        Name Path & TxtList(ArrPos) As "S:\CSR\Contract Renewal Text Files\Failed Files" & "\" & TxtList(ArrPos)
 
-    Rep = GetRepName(SpreadSheetAnswer, SourceConRow(1), SourceWorkbook, ContractNumber)
+    Else
 
-    If Rep = "Teri Sprtel" Then
+        'Locates the contract in the source workbook, if one exists
+        If SpreadSheetAnswer = vbYes Then SourceConRow = SourceContractRow(SourceWorkbook, SpreadSheetAnswer, ContractNumber)
 
-       'This block searches for "NON" file, and if one exists merges the NON and the regular file.
-        NonWorkbookPath = Path & ContractNumber & "NON.txt"
+        Rep = GetRepName(SpreadSheetAnswer, SourceConRow(1), SourceWorkbook, ContractNumber)
 
-        If Len(Dir(NonWorkbookPath)) <> 0 Then
+        If Rep = "Teri Sprtel" Then
 
-            Workbooks.OpenText NonWorkbookPath
-            Set NonWorkbook = ActiveWorkbook
-            Call MergeBooks(TxtWorkbook, NonWorkbook)
-            Call CloseXslxFiles(NonWorkbook)
-            Call MoveProcessedFiles(NonWorkbookPath)
+           'This block searches for "NON" file, and if one exists merges the NON and the regular file.
+            NonWorkbookPath = Path & ContractNumber & "NON.txt"
+
+            If Len(Dir(NonWorkbookPath)) <> 0 Then
+
+                Workbooks.OpenText NonWorkbookPath
+                Set NonWorkbook = ActiveWorkbook
+                Call MergeBooks(TxtWorkbook, NonWorkbook)
+                Call CloseXslxFiles(NonWorkbook)
+                Call MoveProcessedFiles(NonWorkbookPath)
+
+            End If
 
         End If
 
+        'Does not process any Jerry Julius or Chad Miller text files that may have been pulled
+        If Rep = "Jerry Julius" Or Rep = "Chad Miller" Then
+
+            Call CloseXslxFiles(TxtWorkbook)
+
+            Kill Path & TxtList(ArrPos)
+
+        Else
+
+            Call Formatting(TxtWorkbook)
+
+            ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, ContractNumber, Rep, SourceConRow(1), SourceConRow(2), Path)
+
+            If Email = 1 Then SendTime = EmailXslxFiles(ContractAndRepArray(1), ContractAndRepArray(2), ContractAndRepArray(3), SendTime, SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, SourceConRow(1), SourceConRow(2))
+
+            If SpreadSheetAnswer = vbYes Then SourceWorkbook.Save
+
+            Call CloseXslxFiles(TxtWorkbook)
+
+            'Sorts the processed files
+            Call MoveProcessedFiles(Path & TxtList(ArrPos))
+
+        End If
+
+        Files = Files + 1
+
     End If
 
-	'Does not process any Jerry Julius or Chad Miller text files that may have been pulled
-	If Rep = "Jerry Julius" Or Rep = "Chad Miller" Then
-
-		Call CloseXslxFiles(TxtWorkbook)
-
-		Kill Path & TxtList(ArrPos)
-
-	Else
-
-		Call Formatting(TxtWorkbook)
-
-		ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, ContractNumber, Rep, SourceConRow(1), SourceConRow(2), Path)
-
-		If Email = 1 Then SendTime = EmailXslxFiles(ContractAndRepArray(1), ContractAndRepArray(2), ContractAndRepArray(3), SendTime, SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, SourceConRow(1), SourceConRow(2))
-
-		If SpreadSheetAnswer = vbYes Then SourceWorkbook.Save
-
-		Call CloseXslxFiles(TxtWorkbook)
-
-		'Sorts the processed files
-		Call MoveProcessedFiles(Path & TxtList(ArrPos))
-
-	End If
-
-	Files = Files + 1
 
 Next ArrPos
 
@@ -845,6 +850,9 @@ Call ResetSettings
 ShouldMove = MsgBox("Would you like to move the processed .xslx files to the appropriate folder?", vbYesNo, "Move Spreadsheets?")
 
 If ShouldMove = vbYes Then Call MoveSpreadsheets(Path)
+
+SourceWorkbook.ActiveSheet.Range("L2").Value = "Not Running"
+SourceWorkbook.ActiveSheet.Range("M3").Value = Now
 
 Call CloseXslxFiles(SourceWorkbook)
 Application.Quit
