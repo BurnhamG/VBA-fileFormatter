@@ -776,7 +776,11 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
     ContractNumber = GetContract(TxtWorkbook)
 
     'Error handling
-    If Range("A2").Value = 0 Or ContractNumber = "0" Or ContractNumber = vbNullString Then
+	If Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Then
+
+		Kill Path & TxtList(ArrPos)
+
+    Else If Range("A2").Value = 0 Or ContractNumber = "0" Or ContractNumber = vbNullString Then
 
         Call CloseXslxFiles(TxtWorkbook)
 
