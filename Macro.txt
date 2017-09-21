@@ -692,6 +692,7 @@ Dim ContractNumber As String
 Dim Email As Integer
 Dim EmailAnswer As Integer
 Dim Files As Long
+Dim M As Integer 'This is used when looping through the months in order to check for duplicates
 Dim NonWorkbook As Workbook
 Dim NonWorkbookPath As String
 Dim Path As String
@@ -776,62 +777,62 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
     ContractNumber = GetContract(TxtWorkbook)
 
     'Error handling
-	'This first huge block checks if the contract has been sent out in the past 6 months. If it has, it deletes the text file and proceeds. Else, it moves forward with sending the sheet.
-	If Month(Now) = 1 Then
+    'This first huge block checks if the contract has been sent out in the past 6 months. If it has, it deletes the text file and proceeds. Else, it moves forward with sending the sheet.
+    If Month(Now) = 1 Then
 
-		For M = 1 to 5
+        For M = 1 to 5
 
-			If Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
-				Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(12 - M) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "" Then
+            If Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
+                Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(12 - M) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "" Then
 
-				Kill Path & TxtList(ArrPos)
+                Kill Path & TxtList(ArrPos)
 
-			End If
+            End If
 
-		Next M
+        Next M
 
-	Else If Month(Now) < 6 Then
+    ElseIf Month(Now) < 6 Then
 
-		For M = 0 to (Month(Now) - 1)
+        For M = 0 to (Month(Now) - 1)
 
-			If Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
-				Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
-				Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(12 - (6 - M)) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "" Then
+            If Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
+                Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
+                Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(12 - (6 - M)) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "" Then
 
-				Kill Path & TxtList(ArrPos)
+                Kill Path & TxtList(ArrPos)
 
-			End If
+            End If
 
-		Next M
+        Next M
 
-	Else If Month(Now) = 6 Then
+    ElseIf Month(Now) = 6 Then
 
-		For M = 0 to (Month(Now) - 1)
+        For M = 0 to (Month(Now) - 1)
 
-			If Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
-				Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
-				Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(12) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "" Then
+            If Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
+                Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
+                Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(12) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "" Then
 
-				Kill Path & TxtList(ArrPos)
+                Kill Path & TxtList(ArrPos)
 
-			End If
+            End If
 
-		Next M
+        Next M
 
-	Else If Month(Now) > 6 Then
+    ElseIf Month(Now) > 6 Then
 
-		For M = 0 to 6
+        For M = 0 to 6
 
-			If Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
-				Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Then
+            If Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
+                Dir("S:\CSR\Contract Renewal Text Files\Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Then
 
-				Kill Path & TxtList(ArrPos)
+                Kill Path & TxtList(ArrPos)
 
-			End If
+            End If
 
-		Next M
+        Next M
 
-    Else If Range("A2").Value = 0 Or ContractNumber = "0" Or ContractNumber = vbNullString Then
+    ElseIf Range("A2").Value = 0 Or ContractNumber = "0" Or ContractNumber = vbNullString Then
 
         Call CloseXslxFiles(TxtWorkbook)
 
