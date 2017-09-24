@@ -28,7 +28,7 @@ Loop While CorrectSheet <> vbYes
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function GetListOfReps(inFile As String, inArray as String)
+Function GetListOfReps(inFile As String, inArray() as String)
 
 dim i As Integer
 
@@ -46,7 +46,7 @@ GetListOfReps = inArray
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function IsInArray(stringToBeFound As String, arr As Variant) As Boolean
+Function IsInArray(stringToBeFound As Variant, arr As Variant) As Boolean
 
   IsInArray = (UBound(Filter(arr, stringToBeFound)) > -1)
 
@@ -149,7 +149,7 @@ End With
 
 End Sub
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function VerifyTextFile(InArray() As String, inPath As String)
+Function VerifyTextFile(InArray As Variant, inPath As String)
 'Verify that text files exist in the directory by looking at array length
 
 If UBound(InArray) = -1 Then
@@ -253,7 +253,7 @@ SetPath = inPath
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function GetRepName(inSheetAnswer As String, inSourceRow As Long, inSourceBook As Workbook, inContractNo As String)
+Function GetRepName(inSheetAnswer As String, inSourceRow As Variant, inSourceBook As Workbook, inContractNo As String)
 'Gets the name of the sales representative from the source workbook
 
 Dim Attempts As Integer
@@ -444,24 +444,12 @@ SaveXlsxFiles = ContractAndRep
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function EmailXslxFiles(
-    InContract As String,
-    InSalesRep As String,
-    InFirstName As String,
-    InSendTime As Date,
-    SourceBook As Workbook,
-    TextBook As Workbook,
-    inSheetAnswer As String,
-    SourceRow As Long,
-    SourceName As String,
-    inListOfNonConReps() As String,
-    inListOfCCRecipients() As String,
-    inListForHouseAccount() As String
-    )
+Function EmailXslxFiles(InContract As Variant, InSalesRep As Variant, InFirstName As Variant, InSendTime As Date, SourceBook As Workbook, TextBook As Workbook, inSheetAnswer As String, SourceRow As Variant, SourceName As Variant, inListOfCCRecipients() As String, inListForHouseAccount() As String, inListOfRepsToCC() As String, inPath As String)
 'Working in Excel 2000-2016
 'This example sends the last saved version of the Activeworkbook
 'For Tips see: http://www.rondebruin.nl/win/winmail/Outlook/tips.htm
 
+Dim BodyText As String
 Dim EmailBody As String
 Dim SaveName As String
 Dim OutApp As Object
@@ -470,7 +458,12 @@ Dim OutMail As Object
 Set OutApp = CreateObject("Outlook.Application")
 Set OutMail = OutApp.CreateItem(0)
 
-EmailBody = "Hello " & InFirstName & "," & "<p>Please see the attached contract review. Items in <b><span style='color:#7030A0'>purple</span></b> are at or below cost, Items in <b><span style='color:red'>red</span></b> have not been purchased in the past year. Please let me know what you would like to do.</p> <p>Please forward all changes to <a href=vbNullStringmailto:contracts@cowiweb.comvbNullString>contracts@cowiweb.com</a></p> <p>Thank you, and have a great day!</p>"
+'Get the body of the email
+Open inPath & "DataFiles\EmailBody.txt" For Input As #1
+Input #1, BodyText
+Close #1
+
+EmailBody = "Hello " & InFirstName & "," & BodyText
 
 On Error Resume Next
 
@@ -488,7 +481,7 @@ With OutMail
 
     End If
 
-    If IsInArray(InSalesRep, inListOfNonConReps) Then
+    If IsInArray(InSalesRep, inListOfRepsToCC) Then
 
         .CC = Join(inListOfCCRecipients, ",")
 
@@ -591,7 +584,7 @@ GetFileNames = InTxtList
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub MoveProcessedFiles(InFile As String, inPath As String)
+Sub MoveProcessedFiles(InFile As Variant, inPath As String)
 'Moves processed files to a directory for archiving by month
 
 Dim NameOfFile As Variant
@@ -892,7 +885,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
         If Len(Dir(Path & "Failed Files", vbDirectory)) = 0 Then Call MakeAllDirs(Path & "Failed Files")
 
-        Name Path & TxtList(ArrPos) As inPath & "Failed Files" & "\" & TxtList(ArrPos)
+        Name Path & TxtList(ArrPos) As Path & "Failed Files" & "\" & TxtList(ArrPos)
 
     Else
 
@@ -912,7 +905,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
                 Set NonWorkbook = ActiveWorkbook
                 Call MergeBooks(TxtWorkbook, NonWorkbook)
                 Call CloseXslxFiles(NonWorkbook)
-                Call MoveProcessedFiles(NonWorkbookPath)
+                Call MoveProcessedFiles(NonWorkbook, Path)
 
             End If
 
@@ -931,14 +924,14 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
             ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, ContractNumber, Rep, SourceConRow(1), SourceConRow(2), Path)
 
-            If Email = 1 Then SendTime = EmailXslxFiles(ContractAndRepArray(1), ContractAndRepArray(2), ContractAndRepArray(3), SendTime, SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, SourceConRow(1), SourceConRow(2), ListOfRepsToCC)
+            If Email = 1 Then SendTime = EmailXslxFiles(ContractAndRepArray(1), ContractAndRepArray(2), ContractAndRepArray(3), SendTime, SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, SourceConRow(1), SourceConRow(2), ListOfCCRecipients, ListForHouseAccount, ListOfRepsToCC, Path)
 
             If SpreadSheetAnswer = vbYes Then SourceWorkbook.Save
 
             Call CloseXslxFiles(TxtWorkbook)
 
             'Sorts the processed files
-            Call MoveProcessedFiles(Path & TxtList(ArrPos))
+            Call MoveProcessedFiles(Path & TxtList(ArrPos), Path)
 
         End If
 
