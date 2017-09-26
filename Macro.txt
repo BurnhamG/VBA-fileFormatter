@@ -28,21 +28,21 @@ Loop While CorrectSheet <> vbYes
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function GetListOfReps(inFile As String, inArray() as String)
+Function GetListOfReps(InFile As String, InArray() As String)
 
-dim i As Integer
+Dim I As Integer
 
-Open inFile For Input As #1
+Open InFile For Input As #1
 
-i = 0
+I = 0
 Do Until EOF(1)
-    ReDim Preserve inArray(i)
-    Line Input #1, inArray(i)
-    i = i + 1
+    ReDim Preserve InArray(I)
+    Line Input #1, InArray(I)
+    I = I + 1
 Loop
 Close #1
 
-GetListOfReps = inArray
+GetListOfReps = InArray
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -473,11 +473,11 @@ With OutMail
 
     If InSalesRep = "House Account" Then
 
-        .To = Join(inListForHouseAccount, "; ")
+        .to = Join(inListForHouseAccount, "; ")
 
     Else
 
-        .To = InSalesRep
+        .to = InSalesRep
 
     End If
 
@@ -521,7 +521,7 @@ If inSheetAnswer = vbYes Then 'If there is a source sheet
 End If
 
 'Sets up delayed delivery so as to not flood the system
-InSendTime = DateAdd("n", 3, InSendTime)
+InSendTime = DateAdd("n", 10, InSendTime)
 
 'Avoids sending emails after 1700 hours
 If Hour(InSendTime) >= 17 Then InSendTime = DateAdd("n", 940, InSendTime)
@@ -599,7 +599,7 @@ Name InFile As inPath & "Processed Files\" & MonthName(Month(Now)) & " " & Year(
 
 End Sub
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub PrepareSource(Source as Workbook, NamesArr() As String)
+Sub PrepareSource(Source As Workbook, NamesArr() As String)
 'Properly formats the source sheet for logging
 
 Dim FirstAddress As String
@@ -664,7 +664,7 @@ If Range("M1") <> "Prepared" Then
         .Interior.Color = 12632256
     End With
 
-    Range("I:K").Borders.LineStyle = xlContinuous
+    Range("A:K").Borders.LineStyle = xlContinuous
     Range("M3").Value = "Last Run:"
     Range("M1").Value = "Prepared"
 
@@ -823,12 +823,12 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
     'This first huge block checks if the contract has been sent out in the past 6 months. If it has, it deletes the text file and proceeds. Else, it moves forward with sending the sheet.
     If Month(Now) = 1 Then
 
-        For M = 1 to 5
+        For M = 1 To 5
 
-            If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
+            If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
                 Dir(Path & "Processed Files\" & MonthName(12 - M) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "" Then
 
-                Call CloseXslxFiles(Path & TxtList(ArrPos))
+                Call CloseXslxFiles(TxtWorkbook)
                 Kill Path & TxtList(ArrPos)
 
             End If
@@ -837,13 +837,13 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
     ElseIf Month(Now) < 6 Then
 
-        For M = 0 to (Month(Now) - 1)
+        For M = 0 To (Month(Now) - 1)
 
-            If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
-                Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
+            If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
+                Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
                 Dir(Path & "Processed Files\" & MonthName(12 - (6 - M)) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "" Then
 
-                Call CloseXslxFiles(Path & TxtList(ArrPos))
+                Call CloseXslxFiles(TxtWorkbook)
                 Kill Path & TxtList(ArrPos)
 
             End If
@@ -852,13 +852,13 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
     ElseIf Month(Now) = 6 Then
 
-        For M = 0 to (Month(Now) - 1)
+        For M = 0 To (Month(Now) - 1)
 
-            If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
-                Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
+            If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
+                Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
                 Dir(Path & "Processed Files\" & MonthName(12) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "" Then
 
-                Call CloseXslxFiles(Path & TxtList(ArrPos))
+                Call CloseXslxFiles(TxtWorkbook)
                 Kill Path & TxtList(ArrPos)
 
             End If
@@ -867,19 +867,21 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
     ElseIf Month(Now) > 6 Then
 
-        For M = 0 to 6
+        For M = 0 To 6
 
-            If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" or _
+            If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
                 Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Then
 
-                Call CloseXslxFiles(Path & TxtList(ArrPos))
+                Call CloseXslxFiles(TxtWorkbook)
                 Kill Path & TxtList(ArrPos)
 
             End If
 
         Next M
-
-    ElseIf Range("A2").Value = 0 Or ContractNumber = "0" Or ContractNumber = vbNullString Then
+    
+    End If
+    
+    If Range("A2").Value = 0 Or ContractNumber = "0" Or ContractNumber = vbNullString Then
 
         Call CloseXslxFiles(TxtWorkbook)
 
@@ -938,7 +940,6 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Files = Files + 1
 
     End If
-
 
 Next ArrPos
 
