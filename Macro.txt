@@ -12,19 +12,15 @@ SpreadSheetPath = SetPath(SpreadSheetPath)
 SpreadSheetFile = Dir(SpreadSheetPath & "*.xlsx")
 
 Do
-    CorrectSheet = MsgBox("Is """ & SpreadSheetFile & """ the correct file?", vbYesNo + vbQuestion + vbMsgBoxSetForeground, "Correct?")
+  CorrectSheet = MsgBox("Is """ & SpreadSheetFile & """ the correct file?", vbYesNo + vbQuestion + vbMsgBoxSetForeground, "Correct?")
 
-    Do
+  If CorrectSheet = vbYes Then
+      SetSpreadsheet = SpreadSheetPath & "\" & SpreadSheetFile
+  Else
+      SpreadSheetFile = Dir
+  End If
 
-        If CorrectSheet = vbYes Then
-            SetSpreadsheet = SpreadSheetPath & "\" & SpreadSheetFile
-        Else
-            SpreadSheetFile = Dir
-        End If
-
-    Loop Until SetSpreadsheet <> ""
-
-Loop While CorrectSheet <> vbYes
+Loop While CorrectSheet <> vbYes And SetSpreadsheet = ""
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -48,7 +44,7 @@ End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 Function IsInArray(stringToBeFound As Variant, arr As Variant) As Boolean
 
-  IsInArray = (UBound(Filter(arr, stringToBeFound)) > -1)
+IsInArray = (UBound(Filter(arr, stringToBeFound)) > -1)
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -255,6 +251,7 @@ End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 Function GetRepName(inSheetAnswer As String, inSourceRow As Variant, inSourceBook As Workbook, inContractNo As String)
 'Gets the name of the sales representative from the source workbook
+'Use Switch Case here
 
 Dim Attempts As Integer
 Dim CurrentCell
@@ -351,6 +348,11 @@ Function GetContract(TextBook As Workbook)
 
 Dim TxtContractSplit
 
+'This checks for empty lines at the beginning of the worksheet'
+Do While IsEmpty(TextBook.ActiveSheet.Range("A1").Value)
+  TextBook.ActiveSheet.Range("A1").EntireRow.Delete
+Loop
+
 TxtContractSplit = Split(TextBook.ActiveSheet.Range("A3").Value, ",")
 
 'This block checks for a text file that only has one contract listed and then splits by space in order to get the correct value
@@ -375,13 +377,19 @@ Dim TempOne As String
 Dim TempTwo As String
 Dim TempArray(1 To 2) As Variant
 
-TempOne = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet).Row
-TempTwo = inContractNo & " " & Trim(inSourceBook.ActiveSheet.Cells(TempOne, 2).Value)
+'This needs a lot better error handling, because it will sometimes return Nothing
+TempOne = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet)
 
-TempArray(1) = TempOne
-TempArray(2) = TempTwo
+If TempOne Is Nothing Then
+  SourceContractRow = "Failed"
+Else
+  TempOne = TempOne.Row
+  TempTwo = inContractNo & " " & Trim(inSourceBook.ActiveSheet.Cells(TempOne, 2).Value)
 
-SourceContractRow = TempArray
+  TempArray(1) = TempOne
+  TempArray(2) = TempTwo
+
+  SourceContractRow = TempArray
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -458,6 +466,8 @@ Dim OutMail As Object
 Set OutApp = CreateObject("Outlook.Application")
 Set OutMail = OutApp.CreateItem(0)
 
+'Check if the file exists first and exit if it doesn't
+
 'Get the body of the email
 Open inPath & "DataFiles\EmailBody.txt" For Input As #1
 Input #1, BodyText
@@ -465,7 +475,7 @@ Close #1
 
 EmailBody = "Hello " & InFirstName & "," & BodyText
 
-On Error Resume Next
+'On Error Resume Next
 
 With OutMail
 
@@ -713,10 +723,20 @@ Application.EnableEvents = True
 
 End Sub
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Sub MoveFailedFiles(inPath As String, inName As String)
+'This moves any failed files to the appropriate directory
+
+If Len(Dir(inPath & "Failed Files", vbDirectory)) = 0 Then Call MakeAllDirs(inPath & "Failed Files")
+
+Name inPath & inName As inPath & "Failed Files" & "\" & inName
+
+End Sub
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 Sub ContractRenewals()
 'The meat and potatoes: This pulls everything together and completes the entire process
 'SOURCE FOR TIMER: www.TheSpreadsheetGuru.com/the-code-vault
 
+' Can these be made into a type or class?
 Dim ArrPos As Long
 Dim ContractAndRepArray
 Dim ContractNumber As String
@@ -821,6 +841,8 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
     'Error handling
     'This first huge block checks if the contract has been sent out in the past 6 months. If it has, it deletes the text file and proceeds. Else, it moves forward with sending the sheet.
+    'This should also be a Switch Case block instead
+    'This needs logging of deleted files
     If Month(Now) = 1 Then
 
         For M = 1 To 5
@@ -878,16 +900,14 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
             End If
 
         Next M
-    
+
     End If
-    
+
     If Range("A2").Value = 0 Or ContractNumber = "0" Or ContractNumber = vbNullString Then
 
         Call CloseXslxFiles(TxtWorkbook)
 
-        If Len(Dir(Path & "Failed Files", vbDirectory)) = 0 Then Call MakeAllDirs(Path & "Failed Files")
-
-        Name Path & TxtList(ArrPos) As Path & "Failed Files" & "\" & TxtList(ArrPos)
+        Call MoveFailedFiles(Path, TxtList(ArrPos))
 
     Else
 
@@ -918,6 +938,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
             Call CloseXslxFiles(TxtWorkbook)
 
+            'Log this deletion?
             Kill Path & TxtList(ArrPos)
 
         Else
