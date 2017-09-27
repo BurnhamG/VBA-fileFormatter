@@ -42,7 +42,7 @@ GetListOfReps = InArray
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function IsInArray(stringToBeFound As Variant, arr As Variant) As Boolean
+Function IsInArray(stringToBeFound As String, arr As Variant) As Boolean
 
 IsInArray = (UBound(Filter(arr, stringToBeFound)) > -1)
 
@@ -58,6 +58,8 @@ Function FindFirstInstancePart(inFind As String, inSheet As Worksheet)
 
 Set FindFirstInstancePart = inSheet.Range("A:A").Find(What:=inFind, LookAt:=xlPart) 'Finds the search term
 
+'Check for invalid search
+If FindFirstInstancePart Is Nothing Then
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 Sub Formatting(TextBook As Workbook)
@@ -383,7 +385,7 @@ TempOne = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet)
 If TempOne = vbNullString Then
   SourceContractRow = "Failed"
 Else
-  TempOne = TempOne.Row
+  TempOne = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet).Row
   TempTwo = inContractNo & " " & Trim(inSourceBook.ActiveSheet.Cells(TempOne, 2).Value)
 End If
 
@@ -477,7 +479,7 @@ Set OutMail = OutApp.CreateItem(0)
 'Get the body of the email
 'DOUBLE CHECK THE SYNTAX
 Open inPath & "DataFiles\EmailBody.txt" For Input As #1
-BodyText = Input(LOF(1)), 1)
+BodyText = Input$(LOF(1), 1)
 Close #1
 
 EmailBody = "Hello " & InFirstName & "," & BodyText
@@ -514,8 +516,8 @@ With OutMail
     .Attachments.Add TextBook.FullName
     'You can add other files also like this
     '.Attachments.Add ("C:\test.txt")
-    .Send   'or use .Display
-    '.Display
+    '.Send   'or use .Display
+    .Display
 
 End With
 
