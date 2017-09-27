@@ -380,14 +380,21 @@ Dim TempArray(1 To 2) As Variant
 'This needs a lot better error handling, because it will sometimes return Nothing
 TempOne = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet)
 
-If TempOne Is Nothing Then
+If TempOne = vbNullString Then
   SourceContractRow = "Failed"
 Else
   TempOne = TempOne.Row
   TempTwo = inContractNo & " " & Trim(inSourceBook.ActiveSheet.Cells(TempOne, 2).Value)
+End If
 
+If SourceContractRow = "Failed" Then
+  MsgBox "No text files were found."
+  Call ResetSettings
+  End
+Else
   TempArray(1) = TempOne
   TempArray(2) = TempTwo
+End If
 
   SourceContractRow = TempArray
 
@@ -407,12 +414,11 @@ If SheetAnswer = vbYes Then 'If there is a source sheet
     SaveName = SourceName
 
     'This sets the current time as when the file was processed
-    With SourceBook.ActiveSheet.Cells(SourceRow, 9)
+    With SourceBook.ActiveSheet.Cells(SourceRow, 10)
         .NumberFormat = "mm/dd/yyyy hh:mm:ss"
         .Value = Now
         .Cells.Columns.autofit
     End With
-
 
 Else 'No source sheet
 
@@ -469,8 +475,9 @@ Set OutMail = OutApp.CreateItem(0)
 'Check if the file exists first and exit if it doesn't
 
 'Get the body of the email
+'DOUBLE CHECK THE SYNTAX
 Open inPath & "DataFiles\EmailBody.txt" For Input As #1
-Input #1, BodyText
+BodyText = Input(LOF(1)), 1)
 Close #1
 
 EmailBody = "Hello " & InFirstName & "," & BodyText
@@ -522,7 +529,7 @@ If inSheetAnswer = vbYes Then 'If there is a source sheet
     SaveName = SourceName
 
     'This logs when the contract was actually sent
-    With SourceBook.ActiveSheet.Cells(SourceRow, 10)
+    With SourceBook.ActiveSheet.Cells(SourceRow, 11)
         .NumberFormat = "mm/dd/yyyy hh:mm:ss"
         .Value = InSendTime
         .Cells.Columns.autofit
@@ -907,7 +914,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
         Call CloseXslxFiles(TxtWorkbook)
 
-        Call MoveFailedFiles(Path, TxtList(ArrPos))
+        Call MoveFailedFiles(Path, Str(TxtList(ArrPos)))
 
     Else
 
