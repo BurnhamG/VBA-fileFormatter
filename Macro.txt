@@ -59,7 +59,8 @@ Function FindFirstInstancePart(inFind As String, inSheet As Worksheet)
 Set FindFirstInstancePart = inSheet.Range("A:A").Find(What:=inFind, LookAt:=xlPart) 'Finds the search term
 
 'Check for invalid search
-If FindFirstInstancePart Is Nothing Then
+If FindFirstInstancePart Is Nothing Then FindFirstInstancePart = -1
+
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 Sub Formatting(TextBook As Workbook)
@@ -113,16 +114,17 @@ CurrentRow = TableStart
 
 Do While CurrentRow < TableEnd
 
-    If IsEmpty(Cells(CurrentRow, "E")) Then
+  If IsEmpty(Cells(CurrentRow, "E")) Then
 
-        With Rows(CurrentRow).Font
-            .Color = 255
-            .TintAndShade = 0
-        End With
+    With Rows(CurrentRow).Font
+      .Color = 255
+      .TintAndShade = 0
+    End With
 
-    End If
+  End If
 
-        CurrentRow = CurrentRow + 1
+  CurrentRow = CurrentRow + 1
+
 Loop
 
 'This marks the appropriate rows with a currency style
@@ -130,16 +132,16 @@ Range("G:G,J:J,K:K").NumberFormat = "$#,##0.00"
 
 'This fills any cells with a negative gross profit ratio purple
 With Columns("I:I")
-    .FormatConditions.Delete 'Removes any conditional formatting that may exist (Mostly a safeguard)
+  .FormatConditions.Delete 'Removes any conditional formatting that may exist (Mostly a safeguard)
 
-    With .FormatConditions.Add(Type:=xlCellValue, Operator:=xlLess, Formula1:="=0") 'Condition searches for any cells with a negative value
+  With .FormatConditions.Add(Type:=xlCellValue, Operator:=xlLess, Formula1:="=0") 'Condition searches for any cells with a negative value
 
-        With .Interior
-            .Color = 16751052 'The fill color
-            .TintAndShade = 0
-        End With
+    With .Interior
+      .Color = 16751052 'The fill color
+      .TintAndShade = 0
+    End With
 
-        .StopIfTrue = False 'Only used with multiple conditional formatting rules (To prevent further formatting of cells that are true in the first pass)
+    .StopIfTrue = False 'Only used with multiple conditional formatting rules (To prevent further formatting of cells that are true in the first pass)
 
    End With
 
@@ -152,12 +154,12 @@ Function VerifyTextFile(InArray As Variant, inPath As String)
 
 If UBound(InArray) = -1 Then
 
-    MsgBox "No text files were found in this directory." & vbNewLine & "The current directory is " & inPath & vbNewLine & "Please confirm that you entered the correct path to the text files.", , "No Valid Files Found"
-    VerifyTextFile = vbNullString
+  MsgBox "No text files were found in this directory." & vbNewLine & "The current directory is " & inPath & vbNewLine & "Please confirm that you entered the correct path to the text files.", , "No Valid Files Found"
+  VerifyTextFile = vbNullString
 
 Else
 
-    VerifyTextFile = 1
+  VerifyTextFile = 1
 
 End If
 
@@ -373,7 +375,7 @@ If Right(GetContract, 1) = "," Then GetContract = Left(GetContract, Len(GetContr
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function SourceContractRow(inSourceBook As Workbook, inSheetAnswer As String, inContractNo As String) As Variant
+Function SourceContractRow(inSourceBook As Workbook, inSheetAnswer As String, inContractNo As String, inPath As String, inName As String) As Variant
 
 Dim TempOne As String
 Dim TempTwo As String
@@ -382,7 +384,7 @@ Dim TempArray(1 To 2) As Variant
 'This needs a lot better error handling, because it will sometimes return Nothing
 TempOne = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet)
 
-If TempOne = vbNullString Then
+If TempOne = -1 Then
   SourceContractRow = "Failed"
 Else
   TempOne = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet).Row
@@ -390,15 +392,13 @@ Else
 End If
 
 If SourceContractRow = "Failed" Then
-  MsgBox "No text files were found."
-  Call ResetSettings
-  End
+  MsgBox "File not listed."
+  Call MoveFailedFiles(inPath As String, inName As String)
 Else
   TempArray(1) = TempOne
   TempArray(2) = TempTwo
-End If
-
   SourceContractRow = TempArray
+End If
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -836,8 +836,8 @@ If SpreadSheetAnswer = vbYes Then SendTime = DateAdd("n", 5, Application.Workshe
 
 If SendTime < Now Then SendTime = Now 'Checks if there wasn't already a date in the sent time column, or if the send time was in the past
 
-'This is what actually formats, saves, and emails the files
-For ArrPos = LBound(TxtList) To UBound(TxtList)
+  'This is what actually formats, saves, and emails the files
+  For ArrPos = LBound(TxtList) To UBound(TxtList)
 
     'Opens the file
     Workbooks.OpenText Filename:=Path & TxtList(ArrPos)
@@ -852,124 +852,129 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
     'This first huge block checks if the contract has been sent out in the past 6 months. If it has, it deletes the text file and proceeds. Else, it moves forward with sending the sheet.
     'This should also be a Switch Case block instead
     'This needs logging of deleted files
-    If Month(Now) = 1 Then
+    Select Case Month(Now)
+      Case 1
 
         For M = 1 To 5
 
-            If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
-                Dir(Path & "Processed Files\" & MonthName(12 - M) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "" Then
-
-                Call CloseXslxFiles(TxtWorkbook)
-                Kill Path & TxtList(ArrPos)
-
-            End If
-
-        Next M
-
-    ElseIf Month(Now) < 6 Then
-
-        For M = 0 To (Month(Now) - 1)
-
-            If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
-                Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
-                Dir(Path & "Processed Files\" & MonthName(12 - (6 - M)) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "" Then
-
-                Call CloseXslxFiles(TxtWorkbook)
-                Kill Path & TxtList(ArrPos)
-
-            End If
-
-        Next M
-
-    ElseIf Month(Now) = 6 Then
-
-        For M = 0 To (Month(Now) - 1)
-
-            If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
-                Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
-                Dir(Path & "Processed Files\" & MonthName(12) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "" Then
-
-                Call CloseXslxFiles(TxtWorkbook)
-                Kill Path & TxtList(ArrPos)
-
-            End If
-
-        Next M
-
-    ElseIf Month(Now) > 6 Then
-
-        For M = 0 To 6
-
-            If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
-                Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Then
-
-                Call CloseXslxFiles(TxtWorkbook)
-                Kill Path & TxtList(ArrPos)
-
-            End If
-
-        Next M
-
-    End If
-
-    If Range("A2").Value = 0 Or ContractNumber = "0" Or ContractNumber = vbNullString Then
-
-        Call CloseXslxFiles(TxtWorkbook)
-
-        Call MoveFailedFiles(Path, Str(TxtList(ArrPos)))
-
-    Else
-
-        'Locates the contract in the source workbook, if one exists
-        If SpreadSheetAnswer = vbYes Then SourceConRow = SourceContractRow(SourceWorkbook, SpreadSheetAnswer, ContractNumber)
-
-        Rep = GetRepName(SpreadSheetAnswer, SourceConRow(1), SourceWorkbook, ContractNumber)
-
-        If IsInArray(Rep, ListOfNonConReps) Then
-
-           'This block searches for "NON" file, and if one exists merges the NON and the regular file.
-            NonWorkbookPath = Path & ContractNumber & "NON.txt"
-
-            If Len(Dir(NonWorkbookPath)) <> 0 Then
-
-                Workbooks.OpenText NonWorkbookPath
-                Set NonWorkbook = ActiveWorkbook
-                Call MergeBooks(TxtWorkbook, NonWorkbook)
-                Call CloseXslxFiles(NonWorkbook)
-                Call MoveProcessedFiles(NonWorkbook, Path)
-
-            End If
-
-        End If
-
-        'Does not process any "non-process" text files that may have been pulled
-        If IsInArray(Rep, ListToNotProcess) Then
+          If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
+            Dir(Path & "Processed Files\" & MonthName(12 - M) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "" Then
 
             Call CloseXslxFiles(TxtWorkbook)
-
-            'Log this deletion?
             Kill Path & TxtList(ArrPos)
 
-        Else
+          End If
 
-            Call Formatting(TxtWorkbook)
+        Next M
 
-            ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, ContractNumber, Rep, SourceConRow(1), SourceConRow(2), Path)
+      Case Is < 6
 
-            If Email = 1 Then SendTime = EmailXslxFiles(ContractAndRepArray(1), ContractAndRepArray(2), ContractAndRepArray(3), SendTime, SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, SourceConRow(1), SourceConRow(2), ListOfCCRecipients, ListForHouseAccount, ListOfRepsToCC, Path)
+        For M = 0 To (Month(Now) - 1)
 
-            If SpreadSheetAnswer = vbYes Then SourceWorkbook.Save
+          If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
+            Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
+            Dir(Path & "Processed Files\" & MonthName(12 - (6 - M)) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "" Then
 
             Call CloseXslxFiles(TxtWorkbook)
+            Kill Path & TxtList(ArrPos)
 
-            'Sorts the processed files
-            Call MoveProcessedFiles(Path & TxtList(ArrPos), Path)
+          End If
 
-        End If
+        Next M
 
-        Files = Files + 1
+      Case 6
+
+        For M = 0 To (Month(Now) - 1)
+
+          If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
+            Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
+            Dir(Path & "Processed Files\" & MonthName(12) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "" Then
+
+            Call CloseXslxFiles(TxtWorkbook)
+            Kill Path & TxtList(ArrPos)
+
+          End If
+
+    End Select
+
+  Next M
+
+ElseIf Month(Now) > 6 Then
+
+  For M = 0 To 6
+
+    If Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
+      Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "" Then
+
+      Call CloseXslxFiles(TxtWorkbook)
+      Kill Path & TxtList(ArrPos)
 
     End If
+
+  Next M
+
+End If
+
+If Range("A2").Value = 0 Or ContractNumber = "0" Or ContractNumber = vbNullString Then
+
+  Call CloseXslxFiles(TxtWorkbook)
+
+  Call MoveFailedFiles(Path, Str(TxtList(ArrPos)))
+
+Else
+
+  'Locates the contract in the source workbook, if one exists
+  If SpreadSheetAnswer = vbYes Then SourceConRow = SourceContractRow(SourceWorkbook, SpreadSheetAnswer, ContractNumber, Path, Str(TxtList(ArrPos)))
+
+  Rep = GetRepName(SpreadSheetAnswer, SourceConRow(1), SourceWorkbook, ContractNumber)
+
+  If IsInArray(Rep, ListOfNonConReps) And SourceConRow <> "Failed" Then
+
+     'This block searches for "NON" file, and if one exists merges the NON and the regular file.
+      NonWorkbookPath = Path & ContractNumber & "NON.txt"
+
+      If Len(Dir(NonWorkbookPath)) <> 0 Then
+
+          Workbooks.OpenText NonWorkbookPath
+          Set NonWorkbook = ActiveWorkbook
+          Call MergeBooks(TxtWorkbook, NonWorkbook)
+          Call CloseXslxFiles(NonWorkbook)
+          Call MoveProcessedFiles(NonWorkbook, Path)
+
+      End If
+
+  End If
+
+  'Does not process any "non-process" text files that may have been pulled
+  If IsInArray(Rep, ListToNotProcess) And SourceConRow <> "Failed" Then
+
+    Call CloseXslxFiles(TxtWorkbook)
+
+    'Log this deletion?
+    Kill Path & TxtList(ArrPos)
+
+  ElseIf SourceConRow <> "Failed"
+
+    Call Formatting(TxtWorkbook)
+
+    ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, ContractNumber, Rep, SourceConRow(1), SourceConRow(2), Path)
+
+    If Email = 1 Then SendTime = EmailXslxFiles(ContractAndRepArray(1), ContractAndRepArray(2), ContractAndRepArray(3), SendTime, SourceWorkbook, TxtWorkbook, SpreadSheetAnswer, SourceConRow(1), SourceConRow(2), ListOfCCRecipients, ListForHouseAccount, ListOfRepsToCC, Path)
+
+    If SpreadSheetAnswer = vbYes Then SourceWorkbook.Save
+
+      Call CloseXslxFiles(TxtWorkbook)
+
+      'Sorts the processed files
+      Call MoveProcessedFiles(Path & TxtList(ArrPos), Path)
+
+    End If
+
+  If SourceConRow <> "Failed" Then Files = Files + 1
+
+  End If
+
+End If
 
 Next ArrPos
 
