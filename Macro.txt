@@ -758,7 +758,7 @@ Dim ArrPos As Long
 Dim ContractAndRepArray
 Dim ContractNumber As String
 Dim deleteLog As Object
-Dim fso as Object
+Dim FSO as Object
 Dim Email As Integer
 Dim EmailAnswer As Integer
 Dim Files As Long
@@ -820,8 +820,8 @@ If ValidDir = vbNullString Then
 
 End If
 
-Set fso = CreateObject("Scripting.FileSystemObject")
-If Dir(Path & "DataFiles\DeletedDuplicates.txt") <> "" Then Set deleteLog = fso.CreateTextFile(Path & "DataFiles\DeletedDuplicates.txt")
+Set FSO = CreateObject("Scripting.FileSystemObject")
+If Dir(Path & "DataFiles\DeletedDuplicates.txt") <> "" Then Set deleteLog = FSO.CreateTextFile(Path & "DataFiles\DeletedDuplicates.txt")
 
 'See if there is a source spreadsheet and set its location, if one exists
 SpreadSheetAnswer = MsgBox("Do you have a source spreadsheet?", vbYesNo + vbQuestion + vbMsgBoxSetForeground, "Source Spreadsheet?")
@@ -861,8 +861,6 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
   'Error handling
   'This first huge block checks if the contract has been sent out in the past 6 months. If it has, it deletes the text file and proceeds. Else, it moves forward with sending the sheet.
-  'This should also be a Switch Case block instead
-  'This needs logging of deleted files
   Select Case Month(Now)
   Case 1
 
@@ -872,11 +870,13 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Dir(Path & "Processed Files\" & MonthName(12 - M) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "") And AlreadyProcessed = 0 Then
 
         Call CloseXslxFiles(TxtWorkbook)
-        Set deleteLog = fso.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
+        '8 sets the file to the "ForAppending" mode
+        Set deleteLog = FSO.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
         deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Now)
         deleteLog.Close
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
+        Exit For
 
       End If
 
@@ -891,11 +891,12 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Dir(Path & "Processed Files\" & MonthName(12 - (6 - M)) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "") And AlreadyProcessed = 0 Then
 
         Call CloseXslxFiles(TxtWorkbook)
-        Set deleteLog = fso.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
+        Set deleteLog = FSO.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
         deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Now)
         deleteLog.Close
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
+        Exit For
 
       End If
 
@@ -910,11 +911,12 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Dir(Path & "Processed Files\" & MonthName(12) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "") And AlreadyProcessed = 0 Then
 
         Call CloseXslxFiles(TxtWorkbook)
-        Set deleteLog = fso.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
+        Set deleteLog = FSO.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
         deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Now)
         deleteLog.Close
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
+        Exit For
 
        End If
 
@@ -928,11 +930,12 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "") And AlreadyProcessed = 0 Then
 
         Call CloseXslxFiles(TxtWorkbook)
-        Set deleteLog = fso.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
+        Set deleteLog = FSO.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
         deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Now)
         deleteLog.Close
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
+        Exit For
 
        End If
 
