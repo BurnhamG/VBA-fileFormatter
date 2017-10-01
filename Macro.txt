@@ -821,7 +821,7 @@ End If
 
 Set FSO = CreateObject("Scripting.FileSystemObject")
 
-If Dir(Path & "DataFiles\DeletedDuplicates.txt") <> "" Then
+If Dir(Path & "DataFiles\DeletedDuplicates.txt") = "" Then
   Set deleteLog = FSO.CreateTextFile(Path & "DataFiles\DeletedDuplicates.txt")
   deleteLog.Close
 End If
