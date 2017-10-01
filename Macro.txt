@@ -875,7 +875,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Call CloseXslxFiles(TxtWorkbook)
         '8 sets the file to the "ForAppending" mode
         Set deleteLog = FSO.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
-        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Now)
+        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
         deleteLog.Close
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
@@ -895,7 +895,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
         Call CloseXslxFiles(TxtWorkbook)
         Set deleteLog = FSO.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
-        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Now)
+        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
         deleteLog.Close
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
@@ -915,7 +915,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
         Call CloseXslxFiles(TxtWorkbook)
         Set deleteLog = FSO.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
-        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Now)
+        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
         deleteLog.Close
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
@@ -934,7 +934,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
         Call CloseXslxFiles(TxtWorkbook)
         Set deleteLog = FSO.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
-        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Now)
+        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
         deleteLog.Close
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
