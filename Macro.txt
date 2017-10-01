@@ -694,7 +694,6 @@ If Range("M1") <> "Prepared" Then
   Range("M3").Value = "Last Run:"
   Range("M1").Value = "Prepared"
 
-
 End If
 
 Range("M2").Value = "RUNNING"
@@ -821,7 +820,11 @@ If ValidDir = vbNullString Then
 End If
 
 Set FSO = CreateObject("Scripting.FileSystemObject")
-If Dir(Path & "DataFiles\DeletedDuplicates.txt") <> "" Then Set deleteLog = FSO.CreateTextFile(Path & "DataFiles\DeletedDuplicates.txt")
+
+If Dir(Path & "DataFiles\DeletedDuplicates.txt") <> "" Then
+  Set deleteLog = FSO.CreateTextFile(Path & "DataFiles\DeletedDuplicates.txt")
+  deleteLog.Close
+End If
 
 'See if there is a source spreadsheet and set its location, if one exists
 SpreadSheetAnswer = MsgBox("Do you have a source spreadsheet?", vbYesNo + vbQuestion + vbMsgBoxSetForeground, "Source Spreadsheet?")
@@ -835,7 +838,7 @@ If SpreadSheetAnswer = vbYes Then
   ListOfNonConReps = GetListOfReps(Path & "DataFiles\NonConList.txt", ListOfNonConReps)
   ListOfRepsToCC = GetListOfReps(Path & "DataFiles\RepsThatNeedCc.txt", ListOfRepsToCC)
   ListToNotProcess = GetListOfReps(Path & "DataFiles\NoProcess.txt", ListToNotProcess)
-  all PrepareSource(SourceWorkbook, ListToNotProcess)
+  Call PrepareSource(SourceWorkbook, ListToNotProcess)
 
 End If
 
