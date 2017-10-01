@@ -424,7 +424,7 @@ If SheetAnswer = vbYes Then 'If there is a source sheet
   With SourceBook.ActiveSheet.Cells(SourceRow, 10)
     .NumberFormat = "mm/dd/yyyy hh:mm:ss"
     .Value = Now
-    .Cells.Columns.autofit
+    .Cells.Columns.AutoFit
   End With
 
 Else 'No source sheet
@@ -457,7 +457,7 @@ If Len(Dir(SavePath, vbDirectory)) = 0 Then Call MakeAllDirs(SavePath)
 
 Application.DisplayAlerts = False
 
-TextBook.SaveAs Filename:=SavePath & SaveName & ".xlsx", FileFormat:=51, AccessMode:=xlExclusive, ConflictResolution:=Excel.XlSaveConflictResolution.xlLocalSessionChanges '51 is the enumeration for .xlsx files
+TextBook.SaveAs Filename:=Trim(SavePath) & Trim(SaveName) & ".xlsx", FileFormat:=51, AccessMode:=xlExclusive, ConflictResolution:=Excel.XlSaveConflictResolution.xlLocalSessionChanges '51 is the enumeration for .xlsx files
 
 Application.DisplayAlerts = True
 
@@ -486,6 +486,8 @@ Set OutMail = OutApp.CreateItem(0)
 Open inPath & "DataFiles\EmailBody.txt" For Input As #1
 BodyText = Input$(LOF(1), 1)
 Close #1
+
+If InFirstName = "House" Then InFirstName = "Andrea"
 
 EmailBody = "Hello " & InFirstName & "," & BodyText
 
@@ -539,7 +541,7 @@ If inSheetAnswer = vbYes Then 'If there is a source sheet
   With SourceBook.ActiveSheet.Cells(SourceRow, 11)
     .NumberFormat = "mm/dd/yyyy hh:mm:ss"
     .Value = InSendTime
-    .Cells.Columns.autofit
+    .Cells.Columns.AutoFit
   End With
 
 End If
@@ -697,7 +699,7 @@ End If
 
 Range("M2").Value = "RUNNING"
 Cells.Font.Name = "Tahoma"
-Cells.Columns.autofit
+Cells.Columns.AutoFit
 ActiveWorkbook.Save
 
 End Sub
@@ -755,6 +757,8 @@ Dim AlreadyProcessed As Integer
 Dim ArrPos As Long
 Dim ContractAndRepArray
 Dim ContractNumber As String
+Dim deleteLog As Object
+Dim fso as Object
 Dim Email As Integer
 Dim EmailAnswer As Integer
 Dim Files As Long
@@ -780,7 +784,6 @@ Dim TxtWorkbook As Workbook
 Dim ValidDir As String
 
 Call SetSettings
-
 
 EmailAnswer = MsgBox("Would you like to email the finished spreadsheets?", vbYesNo + vbMsgBoxSetForeground, "Email Sheets?")
 
@@ -817,6 +820,9 @@ If ValidDir = vbNullString Then
 
 End If
 
+Set fso = CreateObject("Scripting.FileSystemObject")
+If Dir(Path & "DataFiles\DeletedDuplicates.txt") <> "" Then Set deleteLog = fso.CreateTextFile(Path & "DataFiles\DeletedDuplicates.txt")
+
 'See if there is a source spreadsheet and set its location, if one exists
 SpreadSheetAnswer = MsgBox("Do you have a source spreadsheet?", vbYesNo + vbQuestion + vbMsgBoxSetForeground, "Source Spreadsheet?")
 
@@ -829,8 +835,7 @@ If SpreadSheetAnswer = vbYes Then
   ListOfNonConReps = GetListOfReps(Path & "DataFiles\NonConList.txt", ListOfNonConReps)
   ListOfRepsToCC = GetListOfReps(Path & "DataFiles\RepsThatNeedCc.txt", ListOfRepsToCC)
   ListToNotProcess = GetListOfReps(Path & "DataFiles\NoProcess.txt", ListToNotProcess)
-
-  Call PrepareSource(SourceWorkbook, ListToNotProcess)
+  all PrepareSource(SourceWorkbook, ListToNotProcess)
 
 End If
 
@@ -867,7 +872,11 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Dir(Path & "Processed Files\" & MonthName(12 - M) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "") And AlreadyProcessed = 0 Then
 
         Call CloseXslxFiles(TxtWorkbook)
+        Set deleteLog = fso.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
+        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Now)
+        deleteLog.Close
         Kill Path & TxtList(ArrPos)
+        AlreadyProcessed = 1
 
       End If
 
@@ -882,6 +891,9 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Dir(Path & "Processed Files\" & MonthName(12 - (6 - M)) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "") And AlreadyProcessed = 0 Then
 
         Call CloseXslxFiles(TxtWorkbook)
+        Set deleteLog = fso.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
+        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Now)
+        deleteLog.Close
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
 
@@ -898,6 +910,9 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Dir(Path & "Processed Files\" & MonthName(12) & " " & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "") And AlreadyProcessed = 0 Then
 
         Call CloseXslxFiles(TxtWorkbook)
+        Set deleteLog = fso.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
+        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Now)
+        deleteLog.Close
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
 
@@ -913,6 +928,9 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " & Year(Now) & "\" & TxtList(ArrPos)) <> "") And AlreadyProcessed = 0 Then
 
         Call CloseXslxFiles(TxtWorkbook)
+        Set deleteLog = fso.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
+        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Now)
+        deleteLog.Close
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
 
@@ -979,13 +997,13 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
     'Sorts the processed files
     Call MoveProcessedFiles(Path & TxtList(ArrPos), Path)
 
+    Files = Files + 1
+
     End If
 
-  If SourceConRow(1) <> "Failed" Then Files = Files + 1
-  AlreadyProcessed = 0
-
-
   End If
+
+  AlreadyProcessed = 0
 
 Next ArrPos
 
