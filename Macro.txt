@@ -824,6 +824,11 @@ Set FSO = CreateObject("Scripting.FileSystemObject")
 If Dir(Path & "DataFiles\DeletedDuplicates.txt") = "" Then
   Set deleteLog = FSO.CreateTextFile(Path & "DataFiles\DeletedDuplicates.txt")
   deleteLog.Close
+Else
+  Set deleteLog = FSO.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
+  deleteLog.WriteBlankLines(1)
+  deleteLog.WriteLine("Macro run at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
+  deleteLog.Close
 End If
 
 'See if there is a source spreadsheet and set its location, if one exists
