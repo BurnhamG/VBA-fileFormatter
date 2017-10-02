@@ -612,6 +612,12 @@ Dim NameOfFile As Variant
 
 If Len(Dir(inPath & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\", vbDirectory)) = 0 Then Call MakeAllDirs(inPath & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\")
 
+If InFile is Nothing Then
+  Call ResetSettings
+  MsgBox("Worksheet error detected!")
+  End
+End If
+
 'Gets just the text file name, and saves it to NameOfFile
 NameOfFile = Split(InFile, "\")
 
