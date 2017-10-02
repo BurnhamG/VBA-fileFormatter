@@ -390,16 +390,11 @@ TempOne = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet)
 If TempOne = -1 Then
   TempArray(1) = "Failed"
   SourceContractRow = TempArray
-Else
-  TempOne = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet).Row
-  TempTwo = inContractNo & " " & Trim(inSourceBook.ActiveSheet.Cells(TempOne, 2).Value)
-End If
-
-If SourceContractRow = "Failed" Then
-  'MsgBox "File not listed."
   Call CloseXslxFiles(inTextBook)
   Call MoveFailedFiles(inPath, inName)
 Else
+  TempOne = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet).Row
+  TempTwo = inContractNo & " " & Trim(inSourceBook.ActiveSheet.Cells(TempOne, 2).Value)
   TempArray(1) = TempOne
   TempArray(2) = TempTwo
   SourceContractRow = TempArray
@@ -424,7 +419,7 @@ If SheetAnswer = vbYes Then 'If there is a source sheet
   With SourceBook.ActiveSheet.Cells(SourceRow, 10)
     .NumberFormat = "mm/dd/yyyy hh:mm:ss"
     .Value = Now
-    .Cells.Columns.AutoFit
+    .Cells.Columns.autofit
   End With
 
 Else 'No source sheet
@@ -523,8 +518,8 @@ With OutMail
   .Attachments.Add TextBook.FullName
   'You can add other files also like this
   '.Attachments.Add ("C:\test.txt")
-  '.Send   'or use .Display
-  .Display
+  .Send   'or use .Display
+  '.Display
 
 End With
 
@@ -541,13 +536,13 @@ If inSheetAnswer = vbYes Then 'If there is a source sheet
   With SourceBook.ActiveSheet.Cells(SourceRow, 11)
     .NumberFormat = "mm/dd/yyyy hh:mm:ss"
     .Value = InSendTime
-    .Cells.Columns.AutoFit
+    .Cells.Columns.autofit
   End With
 
 End If
 
 'Sets up delayed delivery so as to not flood the system
-InSendTime = DateAdd("n", 10, InSendTime)
+InSendTime = DateAdd("n", 4, InSendTime)
 
 'Avoids sending emails after 1700 hours
 If Hour(InSendTime) >= 17 Then InSendTime = DateAdd("n", 940, InSendTime)
@@ -698,7 +693,7 @@ End If
 
 Range("M2").Value = "RUNNING"
 Cells.Font.Name = "Tahoma"
-Cells.Columns.AutoFit
+Cells.Columns.autofit
 ActiveWorkbook.Save
 
 End Sub
@@ -757,7 +752,7 @@ Dim ArrPos As Long
 Dim ContractAndRepArray
 Dim ContractNumber As String
 Dim deleteLog As Object
-Dim FSO as Object
+Dim FSO As Object
 Dim Email As Integer
 Dim EmailAnswer As Integer
 Dim Files As Long
@@ -823,11 +818,12 @@ Set FSO = CreateObject("Scripting.FileSystemObject")
 
 If Dir(Path & "DataFiles\DeletedDuplicates.txt") = "" Then
   Set deleteLog = FSO.CreateTextFile(Path & "DataFiles\DeletedDuplicates.txt")
+  deleteLog.WriteLine ("Macro run at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
   deleteLog.Close
 Else
   Set deleteLog = FSO.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
-  deleteLog.WriteBlankLines(1)
-  deleteLog.WriteLine("Macro run at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
+  deleteLog.WriteBlankLines (1)
+  deleteLog.WriteLine ("Macro run at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
   deleteLog.Close
 End If
 
@@ -880,7 +876,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Call CloseXslxFiles(TxtWorkbook)
         '8 sets the file to the "ForAppending" mode
         Set deleteLog = FSO.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
-        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
+        deleteLog.WriteLine (CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
         deleteLog.Close
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
@@ -900,7 +896,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
         Call CloseXslxFiles(TxtWorkbook)
         Set deleteLog = FSO.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
-        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
+        deleteLog.WriteLine (CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
         deleteLog.Close
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
@@ -920,7 +916,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
         Call CloseXslxFiles(TxtWorkbook)
         Set deleteLog = FSO.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
-        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
+        deleteLog.WriteLine (CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
         deleteLog.Close
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
@@ -939,7 +935,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
         Call CloseXslxFiles(TxtWorkbook)
         Set deleteLog = FSO.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
-        deleteLog.WriteLine(CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
+        deleteLog.WriteLine (CStr(TxtList(ArrPos)) & " deleted due to being a duplicate at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
         deleteLog.Close
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
@@ -955,7 +951,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
 
     Call CloseXslxFiles(TxtWorkbook)
 
-    Call MoveFailedFiles(Path, Str(TxtList(ArrPos)))
+    Call MoveFailedFiles(Path, CStr(TxtList(ArrPos)))
 
   ElseIf AlreadyProcessed <> 1 Then
 
