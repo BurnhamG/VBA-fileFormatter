@@ -605,14 +605,14 @@ GetFileNames = InTxtList
 
 End Function
 '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub MoveProcessedFiles(InFile As Variant, inPath As String)
+Sub MoveProcessedFiles(InFile As String, inPath As String)
 'Moves processed files to a directory for archiving by month
 
 Dim NameOfFile As Variant
 
 If Len(Dir(inPath & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\", vbDirectory)) = 0 Then Call MakeAllDirs(inPath & "Processed Files\" & MonthName(Month(Now)) & " " & Year(Now) & "\")
 
-If InFile is Nothing Then
+If InFile = vbNullString Then
   Call ResetSettings
   MsgBox("Worksheet error detected!")
   End
@@ -979,7 +979,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Set NonWorkbook = ActiveWorkbook
         Call MergeBooks(TxtWorkbook, NonWorkbook)
         Call CloseXslxFiles(NonWorkbook)
-        Call MoveProcessedFiles(NonWorkbook, Path)
+        Call MoveProcessedFiles(NonWorkbookPath, Path)
 
       End If
 
@@ -1008,7 +1008,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
     Call CloseXslxFiles(TxtWorkbook)
 
     'Sorts the processed files
-    Call MoveProcessedFiles(Path & TxtList(ArrPos), Path)
+    Call MoveProcessedFiles(Path & CStr(TxtList(ArrPos)), Path)
 
     Files = Files + 1
 
