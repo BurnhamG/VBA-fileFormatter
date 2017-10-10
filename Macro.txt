@@ -635,8 +635,9 @@ Dim Rng As Range
 
 If Range("M1") <> "Prepared" Then
 
-  'This fixes the partial name
+  'This fixes the partial name and an error
   Cells.Replace What:="Salvers", Replacement:="SALVERSON", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=True
+  Cells.Replace What:="Binkowski-EBI", Replacement:="BINKOWSKI", LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, ReplaceFormat:=True
 
   'Search Column or range
   With Source.Worksheets(1).Range("G:G")
@@ -661,7 +662,7 @@ If Range("M1") <> "Prepared" Then
         FirstAddress = Rng.Address
         Do
           'Mark to the right if the search term is found
-          With Rng.Offset(0, 2)
+          With Rng.Offset(0, 3)
             .Value = "IGNORED"
             .Interior.Color = 65535
           End With
