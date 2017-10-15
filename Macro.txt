@@ -813,7 +813,9 @@ Name inPath & inName As inPath & "Failed Files" & "\" & inName
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function DetermineSendTime(InSalesSendTimes As Dictionary, InRep As String)
+Function DetermineSendTime(InSalesSendTimes As Dictionary, _
+                            InRep As String, _
+                            MaxTime As Date)
 
 Dim i As Variant
 Dim j As Long
@@ -908,7 +910,6 @@ Sub ContractRenewals()
 'The meat and potatoes: This pulls everything together
 'SOURCE FOR TIMER: www.TheSpreadsheetGuru.com/the-code-vault
 
-' Can these be made into a type or class?
 Dim AlreadyProcessed As Integer
 Dim ArrPos As Long
 Dim BodyText As String
@@ -1229,6 +1230,9 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
                                         Path)
 
     If Email = 1 Then
+
+      SendTime = DetermineSendTime(SalesSendTimes, Rep, SendTime)
+
       Call EmailXslxFiles(ContractAndRepArray(1), _
                           ContractAndRepArray(2), _
                           ContractAndRepArray(3), _
