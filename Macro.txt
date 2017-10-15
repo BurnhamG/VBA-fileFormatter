@@ -1,6 +1,6 @@
 Option Explicit
 
-Function SetSpreadsheet(inAnswer As String, inPath As String)
+Function SetSpreadsheet(inPath As String)
 'This is used to select a spreadsheet file, usually the source spreadsheet
 
 Dim CorrectSheet As String
@@ -27,21 +27,21 @@ Loop While CorrectSheet <> vbYes And SetSpreadsheet = ""
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function GetListOfReps(InFile As String, InArray() As String)
+Function GetListOfReps(inFile As String, inArray() As String)
 
 Dim I As Integer
 
-Open InFile For Input As #1
+Open inFile For Input As #1
 
 I = 0
 Do Until EOF(1)
-  ReDim Preserve InArray(I)
-  Line Input #1, InArray(I)
+  ReDim Preserve inArray(I)
+  Line Input #1, inArray(I)
   I = I + 1
 Loop
 Close #1
 
-GetListOfReps = InArray
+GetListOfReps = inArray
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -73,7 +73,7 @@ If FindFirstInstancePart Is Nothing Then FindFirstInstancePart = -1
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub Formatting(TextBook As Workbook)
+Sub Formatting(textBook As Workbook)
 'This formats the text file before saving
 
 Dim CurrentRow As Long
@@ -82,7 +82,7 @@ Dim TableStart As Long
 Dim TxtSheet As Excel.Worksheet
 Dim WholeTable As Range
 
-Set TxtSheet = TextBook.ActiveSheet
+Set TxtSheet = textBook.ActiveSheet
 
 'Locates header row of the table, looking for "Product"
 'Identifies the starting and ending row of the table
@@ -166,12 +166,14 @@ With Columns("I:I")
 
 End With
 
+TxtSheet.Cells.AutoFit
+
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function VerifyTextFile(InArray As Variant, inPath As String)
+Function VerifyTextFile(inArray As Variant, inPath As String)
 'Verify that text files exist in the directory by looking at array length
 
-If UBound(InArray) = -1 Then
+If UBound(inArray) = -1 Then
 
   MsgBox "No text files were found in this directory." & vbNewLine & _
       "The current directory is " & inPath & vbNewLine & _
@@ -189,36 +191,37 @@ End If
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 Sub MakeAllDirs(sPath As String)
+'https://www.devhut.net/2011/09/15/vba-create-directory-structurecreate-multiple-Dirs/
 'Creates all parent direcories of a missing directory
 
-Dim I               As Integer
-Dim aDirs           As Variant
-Dim iStart          As Integer
-Dim sCurDir         As String
+Dim Dirs           As Variant
+Dim I              As Integer
+Dim Start          As Integer
+Dim CurDir         As String
 
 If sPath <> vbNullString Then
 
-  aDirs = Split(sPath, "\")
+  Dirs = Split(sPath, "\")
 
     If Left(sPath, 2) = "\\" Then
 
-      iStart = 3
+      Start = 3
 
     Else
 
-      iStart = 1
+      Start = 1
 
     End If
 
-  sCurDir = Left(sPath, InStr(iStart, sPath, "\"))
+  CurDir = Left(sPath, InStr(Start, sPath, "\"))
 
-  For I = iStart To UBound(aDirs)
+  For I = Start To UBound(Dirs)
 
-    sCurDir = sCurDir & aDirs(I) & "\"
+    CurDir = CurDir & Dirs(I) & "\"
 
-    If Dir(sCurDir, vbDirectory) = vbNullString Then
+    If Dir(CurDir, vbDirectory) = vbNullString Then
 
-      MkDir sCurDir
+      MkDir CurDir
 
     End If
 
@@ -411,23 +414,23 @@ If NonStart <> NonEnd Then inBook.ActiveSheet _
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function GetContract(TextBook As Workbook)
+Function GetContract(textBook As Workbook)
 'This gets the contract number from the information in the text file
 
 Dim TxtContractSplit
 
 'This checks for empty lines at the beginning of the worksheet'
-Do While IsEmpty(TextBook.ActiveSheet.Range("A1").Value)
- TextBook.ActiveSheet.Range("A1").EntireRow.Delete
+Do While IsEmpty(textBook.ActiveSheet.Range("A1").Value)
+ textBook.ActiveSheet.Range("A1").EntireRow.Delete
 Loop
 
-TxtContractSplit = Split(TextBook.ActiveSheet.Range("A3").Value, ",")
+TxtContractSplit = Split(textBook.ActiveSheet.Range("A3").Value, ",")
 
 'This block checks for a text file that only has one contract listed and then
 'splits by space in order to get the correct value
 If UBound(TxtContractSplit, 1) - LBound(TxtContractSplit, 1) + 1 <= 2 Then
 
-  TxtContractSplit = Split(TextBook.ActiveSheet.Range("A3").Value, " ")
+  TxtContractSplit = Split(textBook.ActiveSheet.Range("A3").Value, " ")
   GetContract = Trim(TxtContractSplit(1))
 
 Else
@@ -444,7 +447,6 @@ End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 Function SourceContractRow(inSourceBook As Workbook, _
                             inTextBook As Workbook, _
-                            inSheetAnswer As String, _
                             inContractNo As String, _
                             inPath As String, _
                             inName As String) As Variant
@@ -471,13 +473,13 @@ End If
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function SaveXlsxFiles(SourceBook As Workbook, _
-                        TextBook As Workbook, _
-                        SheetAnswer As String, _
-                        ContractNo As String, _
+Function SaveXlsxFiles(sourceBook As Workbook, _
+                        textBook As Workbook, _
+                        sheetAnswer As String, _
+                        contractNo As String, _
                         inRep As String, _
-                        SourceRow As Long, _
-                        SourceName As String, _
+                        sourceRow As Long, _
+                        sourceName As String, _
                         inPath As String)
 'Saves the file using the contract name and the sales rep name
 
@@ -487,30 +489,30 @@ Dim SaveName As String
 Dim SavePath As String
 Dim SpacePlace As Long
 
-If SheetAnswer = vbYes Then 'If there is a source sheet
+If sheetAnswer = vbYes Then 'If there is a source sheet
 
-  SaveName = SourceName
+  SaveName = sourceName
 
   'This sets the current time as when the file was processed
-  With SourceBook.ActiveSheet.Cells(SourceRow, 10)
+  With sourceBook.ActiveSheet.Cells(sourceRow, 10)
     .NumberFormat = "mm/dd/yyyy hh:mm:ss"
     .Value = Now
-    .Cells.Columns.autofit
+    .Columns.AutoFit
   End With
 
 Else 'No source sheet
 
-  SaveName = Trim(TextBook.ActiveSheet.Range("A2").Value)
+  SaveName = Trim(textBook.ActiveSheet.Range("A2").Value)
   SpacePlace = InStr(1, SaveName, " ", vbTextCompare)
 
   'Checks for mismatched contract numbers, and alerts the user
-  If ContractNo <> Trim(Left(SaveName, SpacePlace)) Then
+  If contractNo <> Trim(Left(SaveName, SpacePlace)) Then
 
     SaveName = InputBox("Contract numbers do not match." & vbNewLine _
                           & "Please enter the contract number and name.", _
                           "Contract Number and Name")
     SpacePlace = InStr(1, SaveName, " ", vbTextCompare)
-    ContractNo = Trim(Left(SaveName, SpacePlace))
+    contractNo = Trim(Left(SaveName, SpacePlace))
 
   End If
 
@@ -520,7 +522,7 @@ SaveName = Replace(SaveName, "/", "-") 'Removes any forward slashes
 SpacePlace = InStr(1, inRep, " ", vbTextCompare)
 FirstName = Trim(Left(inRep, SpacePlace))
 
-ContractAndRep(1) = ContractNo
+ContractAndRep(1) = contractNo
 ContractAndRep(2) = inRep
 ContractAndRep(3) = FirstName
 
@@ -531,7 +533,7 @@ If Len(Dir(SavePath, vbDirectory)) = 0 Then Call MakeAllDirs(SavePath)
 Application.DisplayAlerts = False
 
 '51 is the enumeration for .xlsx files
-TextBook.SaveAs Filename:=Trim(SavePath) & Trim(SaveName) & ".xlsx", _
+textBook.SaveAs Filename:=Trim(SavePath) & Trim(SaveName) & ".xlsx", _
                             FileFormat:=51, AccessMode:=xlExclusive, _
                             ConflictResolution:=Excel.XlSaveConflictResolution _
                                                   .xlLocalSessionChanges
@@ -542,16 +544,15 @@ SaveXlsxFiles = ContractAndRep
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub EmailXslxFiles(InContract As String, _
-                        InSalesRep As String, _
-                        InFirstName As String, _
-                        InBodyText, _
-                        InSendTime As Date, _
-                        TextBook As Workbook, _
+Sub EmailXslxFiles(inContract As String, _
+                        inSalesRep As String, _
+                        inFirstName As String, _
+                        inBodyText, _
+                        inSendTime As Date, _
+                        textBook As Workbook, _
                         inListOfCCRecipients() As String, _
                         inListForHouseAccount() As String, _
-                        inListOfRepsToCC() As String, _
-                        inPath As String)
+                        inListOfRepsToCC() As String)
 'Working in Excel 2000-2016
 'This example sends the last saved version of the Activeworkbook
 'For Tips see: http://www.rondebruin.nl/win/winmail/Outlook/tips.htm
@@ -568,27 +569,27 @@ Set OutMail = OutApp.CreateItem(0)
 'Get the body of the email
 'DOUBLE CHECK THE SYNTAX
 
-If InFirstName = "House" Then InFirstName = ""
+If inFirstName = "House" Then inFirstName = ""
 
-EmailBody = "Hello " & InFirstName & "," & InBodyText
+EmailBody = "Hello " & inFirstName & "," & inBodyText
 
 'On Error Resume Next
 
 With OutMail
 
-  .DeferredDeliveryTime = InSendTime
+  .DeferredDeliveryTime = inSendTime
 
-  If InSalesRep = "House Account" Then
+  If inSalesRep = "House Account" Then
 
     .To = Join(inListForHouseAccount, "; ")
 
   Else
 
-    .To = InSalesRep
+    .To = inSalesRep
 
   End If
 
-  If IsInArray(CStr(InSalesRep), inListOfRepsToCC) Then
+  If IsInArray(CStr(inSalesRep), inListOfRepsToCC) Then
 
     .CC = Join(inListOfCCRecipients, ",")
 
@@ -599,9 +600,9 @@ With OutMail
   End If
 
   .BCC = vbNullString
-  .Subject = InContract & " Contract Renewal"
+  .Subject = inContract & " Contract Renewal"
   .HTMLBody = EmailBody
-  .Attachments.Add TextBook.FullName
+  .Attachments.Add textBook.FullName
   'You can add other files also like this
   '.Attachments.Add ("C:\test.txt")
   .Send   'or use .Display
@@ -624,7 +625,7 @@ Application.DisplayAlerts = True
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function GetFileNames(FilesLoc As String)
+Function GetFileNames(filesLoc As String)
 'Loops through the provided folder and stores matching filenames in an array
 
 Dim I As Long
@@ -633,7 +634,7 @@ Dim TxtPath As String
 
 I = 0
 
-TxtPath = Dir(FilesLoc & "*.txt")
+TxtPath = Dir(filesLoc & "*.txt")
 
 'Structure from
 'http://www.java2s.com/Code/VBA-Excel-Access-Word/File-Path/Usearraytostorealistoffiles.htm
@@ -660,7 +661,7 @@ GetFileNames = InTxtList
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub MoveProcessedFiles(InFile As String, inPath As String)
+Sub MoveProcessedFiles(inFile As String, inPath As String)
 'Moves processed files to a directory for archiving by month
 
 Dim NameOfFile As String
@@ -670,22 +671,22 @@ If Len(Dir(inPath & "Processed Files\" & MonthName(Month(Now)) & " " _
   Call MakeAllDirs(inPath & "Processed Files\" & MonthName(Month(Now)) & " " _
                     & Year(Now) & "\")
 
-If InFile = vbNullString Then
+If inFile = vbNullString Then
   Call ResetSettings
   MsgBox("Worksheet error detected!")
   End
 End If
 
 'Gets just the text file name, and saves it to NameOfFile
-NameOfFile = Split(InFile, "\")
+NameOfFile = Split(inFile, "\")
 
 'Saves the file under the current month and year folder
-Name InFile As inPath & "Processed Files\" & MonthName(Month(Now)) & " " _
+Name inFile As inPath & "Processed Files\" & MonthName(Month(Now)) & " " _
                 & Year(Now) & "\" & NameOfFile(UBound(NameOfFile))
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub PrepareSource(Source As Workbook, NamesArr() As String)
+Sub PrepareSource(inSourceBook As Workbook, namesArr() As String)
 'Properly formats the source sheet for logging
 
 Dim FirstAddress As String
@@ -703,16 +704,16 @@ If Range("M1") <> "Prepared" Then
     SearchFormat:=False, ReplaceFormat:=True
 
   'Search Column or range
-  With Source.Worksheets(1).Range("G:G")
+  With inSourceBook.Worksheets(1).Range("G:G")
 
-    For I = LBound(NamesArr) To UBound(NamesArr)
+    For I = LBound(namesArr) To UBound(namesArr)
 
       'If you want to find a part of the rng.value then use xlPart
       'if you use LookIn:=xlValues it will also work with a
       'formula cell that evaluates to the search term.
       'This next block searches for the values in the above array
 
-      Set Rng = .Find(What:=NamesArr(I), _
+      Set Rng = .Find(What:=namesArr(I), _
               After:=.Cells(.Cells.Count), _
               LookIn:=xlFormulas, _
               LookAt:=xlPart, _
@@ -763,7 +764,7 @@ End If
 
 Range("M2").Value = "RUNNING"
 Cells.Font.Name = "Tahoma"
-Cells.Columns.autofit
+Cells.Columns.AutoFit
 ActiveWorkbook.Save
 
 End Sub
@@ -813,54 +814,54 @@ Name inPath & inName As inPath & "Failed Files" & "\" & inName
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function DetermineSendTime(InSalesSendTimes As Dictionary, _
-                            InRep As String, _
+Function DetermineSendTime(inSalesSendTimes As Dictionary, _
+                            inRep As String, _
                             MaxTime As Date)
 
-Dim i As Variant
-Dim j As Long
+Dim item As Variant
+Dim count As Long
 Dim Times() As Date
 
-j = 0
+count = 0
 
-If InSalesSendTimes.Exists(InRep) Then
+If inSalesSendTimes.Exists(inRep) Then
 
-  InSalesSendTimes(InRep) = DateAdd("n", 12, InSalesSendTimes(InRep))
+  inSalesSendTimes(inRep) = DateAdd("n", 12, inSalesSendTimes(inRep))
 
   'Avoids sending emails after 1700 hours
-  If InSalesSendTimes(InRep) >= 17 Then
+  If inSalesSendTimes(inRep) >= 17 Then
 
-    InSalesSendTimes(InRep) = DateAdd("n", 940, InSalesSendTimes(InRep))
+    inSalesSendTimes(inRep) = DateAdd("n", 940, inSalesSendTimes(inRep))
 
   End If
 
   'Avoids sending emails on the weekend
-  If Weekday(InSalesSendTimes(InRep), vbSunday) = 1 Then
+  If Weekday(inSalesSendTimes(inRep), vbSunday) = 1 Then
 
-    InSalesSendTimes(InRep) = DateAdd("d", 1, InSalesSendTimes(InRep))
+    inSalesSendTimes(inRep) = DateAdd("d", 1, inSalesSendTimes(inRep))
 
-  ElseIf Weekday(InSalesSendTimes(InRep), vbSunday) = 7 Then
+  ElseIf Weekday(inSalesSendTimes(inRep), vbSunday) = 7 Then
 
-    InSalesSendTimes(InRep) = DateAdd("d", 2, InSalesSendTimes(InRep))
+    inSalesSendTimes(inRep) = DateAdd("d", 2, inSalesSendTimes(inRep))
 
   End If
 
 Else
 
-  If InSalesSendTimes.Count = 0 Then
+  If inSalesSendTimes.Count = 0 Then
 
-    InSalesSendTimes(InRep) = DateAdd("n", 5, InSalesSendTimes(InRep))
+    inSalesSendTimes(inRep) = DateAdd("n", 5, inSalesSendTimes(inRep))
 
   Else
 
-    For Each i in InSalesSendTimes.Keys
+    For Each item in inSalesSendTimes.Keys
       ReDim Preserve Times(j) As Date
-      Times(UBound(Times)) = InSalesSendTimes(i)
-      j = j + 1
+      Times(UBound(Times)) = inSalesSendTimes(item)
+      count = count + 1
     Next
 
   Call QuickSort1(Times)
-    InSalesSendTimes(InRep) = Times(LBound(Times))
+    inSalesSendTimes(inRep) = Times(LBound(Times))
 
   End If
 
@@ -1004,7 +1005,7 @@ SpreadSheetAnswer = MsgBox("Do you have a source spreadsheet?", _
 
 If SpreadSheetAnswer = vbYes Then
 
-  Workbooks.Open SetSpreadsheet(SpreadSheetAnswer, Path)
+  Workbooks.Open SetSpreadsheet(Path)
   Set SourceWorkbook = ActiveWorkbook
   ListForHouseAccount = GetListOfReps(Path & "DataFiles\HouseAccount.txt", _
                                       ListForHouseAccount)
@@ -1178,7 +1179,6 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
     If SpreadSheetAnswer = vbYes Then SourceConRow = _
                                         SourceContractRow(SourceWorkbook, _
                                           TxtWorkbook, _
-                                          SpreadSheetAnswer, _
                                           ContractNumber, _
                                           Path, _
                                           CStr(TxtList(ArrPos)))
@@ -1241,14 +1241,13 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
                           TxtWorkbook, _
                           ListOfCCRecipients, _
                           ListForHouseAccount, _
-                          ListOfRepsToCC, _
-                          Path)
+                          ListOfRepsToCC)
 
       'This logs when the contract was actually sent
-      With SourceBook.ActiveSheet.Cells(CLng(SourceConRow(1)), 11)
+      With sourceBook.ActiveSheet.Cells(CLng(SourceConRow(1)), 11)
         .NumberFormat = "mm/dd/yyyy hh:mm:ss"
         .Value = SendTime
-        .Cells.Columns.autofit
+        .Columns.AutoFit
       End With
 
     If SpreadSheetAnswer = vbYes Then SourceWorkbook.Save
