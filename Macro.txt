@@ -545,12 +545,9 @@ End Function
 Sub EmailXslxFiles(InContract As String, _
                         InSalesRep As String, _
                         InFirstName As String, _
-                        InSendTime As Date,
-                        SourceBook As Workbook, _
+                        InBodyText, _
+                        InSendTime As Date, _
                         TextBook As Workbook, _
-                        inSheetAnswer As String, _
-                        SourceRow As Long, _
-                        SourceName As String, _
                         inListOfCCRecipients() As String, _
                         inListForHouseAccount() As String, _
                         inListOfRepsToCC() As String, _
@@ -559,9 +556,7 @@ Sub EmailXslxFiles(InContract As String, _
 'This example sends the last saved version of the Activeworkbook
 'For Tips see: http://www.rondebruin.nl/win/winmail/Outlook/tips.htm
 
-Dim BodyText As String
 Dim EmailBody As String
-Dim SaveName As String
 Dim OutApp As Object
 Dim OutMail As Object
 
@@ -572,13 +567,10 @@ Set OutMail = OutApp.CreateItem(0)
 
 'Get the body of the email
 'DOUBLE CHECK THE SYNTAX
-Open inPath & "DataFiles\EmailBody.txt" For Input As #1
-BodyText = Input$(LOF(1), 1)
-Close #1
 
 If InFirstName = "House" Then InFirstName = ""
 
-EmailBody = "Hello " & InFirstName & "," & BodyText
+EmailBody = "Hello " & InFirstName & "," & InBodyText
 
 'On Error Resume Next
 
@@ -621,21 +613,6 @@ On Error GoTo 0
 
 Set OutMail = Nothing
 Set OutApp = Nothing
-
-If inSheetAnswer = vbYes Then 'If there is a source sheet
-
-  SaveName = SourceName
-
-  'This logs when the contract was actually sent
-  With SourceBook.ActiveSheet.Cells(SourceRow, 11)
-    .NumberFormat = "mm/dd/yyyy hh:mm:ss"
-    .Value = InSendTime
-    .Cells.Columns.autofit
-  End With
-
-End If
-
-'Sets up delayed delivery so as to not flood the system
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -934,13 +911,14 @@ Sub ContractRenewals()
 ' Can these be made into a type or class?
 Dim AlreadyProcessed As Integer
 Dim ArrPos As Long
+Dim BodyText As String
 Dim ContractAndRepArray
 Dim ContractNumber As String
 Dim deleteLog As Object
-Dim FSO As Object
 Dim Email As Integer
 Dim EmailAnswer As Integer
 Dim Files As Long
+Dim FSO As Object
 Dim ListForHouseAccount() As String 'Person that gets house contract contracts
 Dim ListOfCCRecipients() As String 'The names that receive CCed messages
 Dim ListOfNonConReps() As String 'Reps that want non-contract items as well
@@ -963,6 +941,9 @@ Dim TxtList() As Variant
 Dim TxtWorkbook As Workbook
 Dim ValidDir As String
 
+Open inPath & "DataFiles\EmailBody.txt" For Input As #1
+BodyText = Input$(LOF(1), 1)
+Close #1
 Call SetSettings
 
 EmailAnswer = MsgBox("Would you like to email the finished spreadsheets?", _
@@ -1247,20 +1228,24 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
                                         CStr(SourceConRow(2)), _
                                         Path)
 
-    If Email = 1 Then SendTime = EmailXslxFiles(ContractAndRepArray(1), _
-                                                ContractAndRepArray(2), _
-                                                ContractAndRepArray(3), _
-                                                SendTime, _
-                                                SalesSendTimes, _
-                                                SourceWorkbook, _
-                                                TxtWorkbook, _
-                                                SpreadSheetAnswer, _
-                                                CLng(SourceConRow(1)), _
-                                                CStr(SourceConRow(2)), _
-                                                ListOfCCRecipients, _
-                                                ListForHouseAccount, _
-                                                ListOfRepsToCC, _
-                                                Path)
+    If Email = 1 Then
+      Call EmailXslxFiles(ContractAndRepArray(1), _
+                          ContractAndRepArray(2), _
+                          ContractAndRepArray(3), _
+                          BodyText, _
+                          SendTime, _
+                          TxtWorkbook, _
+                          ListOfCCRecipients, _
+                          ListForHouseAccount, _
+                          ListOfRepsToCC, _
+                          Path)
+
+      'This logs when the contract was actually sent
+      With SourceBook.ActiveSheet.Cells(CLng(SourceConRow(1)), 11)
+        .NumberFormat = "mm/dd/yyyy hh:mm:ss"
+        .Value = SendTime
+        .Cells.Columns.autofit
+      End With
 
     If SpreadSheetAnswer = vbYes Then SourceWorkbook.Save
 
