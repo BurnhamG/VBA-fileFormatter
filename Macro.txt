@@ -11,18 +11,15 @@ SpreadSheetPath = InputBox("Please enter the directory containing the sheet.", _
                             "Sheet Location", inPath)
 SpreadSheetPath = SetPath(SpreadSheetPath)
 SpreadSheetFile = Dir(SpreadSheetPath & "*.xlsx")
-
 Do
   CorrectSheet = MsgBox("Is """ & SpreadSheetFile & """ the correct file?", _
                         vbYesNo + vbQuestion + vbMsgBoxSetForeground, _
                         "Correct?")
-
   If CorrectSheet = vbYes Then
     SetSpreadsheet = SpreadSheetPath & "\" & SpreadSheetFile
   Else
     SpreadSheetFile = Dir
   End If
-
 Loop While CorrectSheet <> vbYes And SetSpreadsheet = ""
 
 End Function
@@ -32,7 +29,6 @@ Function GetListOfReps(inFile As String, inArray() As String)
 Dim I As Integer
 
 Open inFile For Input As #1
-
 I = 0
 Do Until EOF(1)
   ReDim Preserve inArray(I)
@@ -40,7 +36,6 @@ Do Until EOF(1)
   I = I + 1
 Loop
 Close #1
-
 GetListOfReps = inArray
 
 End Function
@@ -56,7 +51,6 @@ Function FindFirstInstanceWhole(inFind As String, inSheet As Worksheet)
 'Finds the search term
 Set FindFirstInstanceWhole = inSheet.Range("A:A").Find(What:=inFind, _
                                                         LookAt:=xlWhole)
-
 'Check for invalid search
 If FindFirstInstanceWhole Is Nothing Then FindFirstInstanceWhole = -1
 
@@ -67,7 +61,6 @@ Function FindFirstInstancePart(inFind As String, inSheet As Worksheet)
 'Finds the search term
 Set FindFirstInstancePart = inSheet.Range("A:A").Find(What:=inFind, _
                                                       LookAt:=xlPart)
-
 'Check for invalid search
 If FindFirstInstancePart Is Nothing Then FindFirstInstancePart = -1
 
@@ -83,89 +76,58 @@ Dim TxtSheet As Excel.Worksheet
 Dim WholeTable As Range
 
 Set TxtSheet = textBook.ActiveSheet
-
 'Locates header row of the table, looking for "Product"
 'Identifies the starting and ending row of the table
-
 TableStart = FindFirstInstanceWhole("Product", TxtSheet).Offset(1, 0).Row
 TableEnd = TxtSheet.Range("N" & TxtSheet.Rows.Count).End(xlUp).Offset(1, 0).Row
-
 'Set the entire range of the table
-
 Set WholeTable = Range("A" & TableStart, "W" & TableEnd)
-
 'Insert the column for calculated values
-
 Columns("O:O").Insert Shift:=xlToRight
-
 'Insert the actual formula
-
 Range("O" & TableStart, "O" & (TableEnd - 1)).FormulaR1C1 = _
                                                 "=(RC[-1]-RC[-4])/RC[-1]"
-
 'Clear the changes column and the last row with totals
-
 Range("N" & TableStart, "N" & TableEnd).ClearContents
 Rows(TableEnd).ClearContents
-
 'Clear any sorting that may exist
-
 TxtSheet.Sort.SortFields.Clear
-
 'Sort the entire table by the Sold column (E), from largest to smallest
-
 WholeTable.Sort Key1:=Range("E" & TableStart, "E" & TableEnd), _
                               Order1:=xlDescending, DataOption1:=xlSortNormal
-
 'This next loop is used to color lines without any sales in the past year red
 'First, set the counter / placeholder variable to be equal with the first row
-
 CurrentRow = TableStart
-
 'Next, this iterates through the table and, if the sales column is blank,
 'changes the font color to bright red
-
 Do While CurrentRow < TableEnd
-
   If IsEmpty(Cells(CurrentRow, "E")) Then
-
     With Rows(CurrentRow).Font
       .Color = 255
       .TintAndShade = 0
     End With
-
   End If
-
   CurrentRow = CurrentRow + 1
-
 Loop
-
 'This marks the appropriate rows with a currency style
 Range("G:G,J:J,K:K").NumberFormat = "$#,##0.00"
-
 'This fills any cells with a negative gross profit ratio purple
 With Columns("I:I")
   'Removes any conditional formatting that may exist (Mostly a safeguard)
   .FormatConditions.Delete
-
   'Condition searches for any cells with a negative value
   With .FormatConditions.Add(Type:=xlCellValue, _
                               Operator:=xlLess, _
                               Formula1:="=0")
-
     With .Interior
       .Color = 16751052 'The fill color
       .TintAndShade = 0
     End With
-
   'Only used with multiple conditional formatting rules
   '(To prevent further formatting of cells that are true in the first pass)
   .StopIfTrue = False
-
   End With
-
 End With
-
 TxtSheet.Cells.AutoFit
 
 End Sub
@@ -174,18 +136,13 @@ Function VerifyTextFile(inArray As Variant, inPath As String)
 'Verify that text files exist in the directory by looking at array length
 
 If UBound(inArray) = -1 Then
-
   MsgBox "No text files were found in this directory." & vbNewLine & _
       "The current directory is " & inPath & vbNewLine & _
       "Please confirm that you entered the correct path to the text files.", , _
       "No Valid Files Found"
-
   VerifyTextFile = vbNullString
-
 Else
-
- VerifyTextFile = 1
-
+  VerifyTextFile = 1
 End If
 
 End Function
@@ -200,33 +157,19 @@ Dim Start          As Integer
 Dim CurDir         As String
 
 If sPath <> vbNullString Then
-
   Dirs = Split(sPath, "\")
-
     If Left(sPath, 2) = "\\" Then
-
       Start = 3
-
     Else
-
       Start = 1
-
     End If
-
   CurDir = Left(sPath, InStr(Start, sPath, "\"))
-
   For I = Start To UBound(Dirs)
-
     CurDir = CurDir & Dirs(I) & "\"
-
     If Dir(CurDir, vbDirectory) = vbNullString Then
-
       MkDir CurDir
-
     End If
-
   Next I
-
 End If
 
 End Sub
@@ -237,51 +180,32 @@ Function SetPath(inPath As String)
 Dim MakePathAnswer As Integer
 
 'Check to ensure path is valid and text files are in the appropriate directory
-
 If inPath = vbNullString Then
-
   Call ResetSettings
   End
-
 ElseIf inPath Like "*[a-zA-Z][:\\]*" <> True Then
-
   If Len(inPath) > 1 And Not Right(inPath, 1) Like "[:\\]" _
       And Not inPath Like "*[0-9]*[:\\]" And Not inPath Like "*[0-9]*" Then
-
     MsgBox "Sorry, that path is not valid." & vbNewLine & _
             "Please ensure that the path ends with a colon or a backslash.", , _
             "Missing Colon or Backslash"
-
     inPath = vbNullString
-
   Else
-
     MsgBox "Sorry, that path is not valid.", , "Invalid Path"
     inPath = vbNullString
-
   End If
-
 ElseIf Len(Dir(inPath, vbDirectory)) = 0 Then
-
   MakePathAnswer = MsgBox("Sorry, that path does not exist." & vbNewLine & _
                           "Would you like to create this path?", _
                           vbYesNo + vbQuestion + vbMsgBoxSetForeground, _
                           "Create directory?")
-
   If MakePathAnswer = vbYes Then
-
     Call MakeAllDirs(inPath)
-
   Else
-
     inPath = vbNullString
-
   End If
-
 End If
-
 If inPath <> vbNullString And Right(inPath, 1) <> "\" Then inPath = inPath & "\"
-
 SetPath = inPath
 
 End Function
@@ -301,85 +225,55 @@ Dim SalesRepSplit
 
 'Can't escape unless name is valid
 Do While GetRepName Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True
-
   If inSheetAnswer = vbYes Then
-
     'This counts how many different companies fall under the same contract
     If IsEmpty(inSourceBook.ActiveSheet.Cells(inSourceRow + 1, 2).Value) Then
-
       Set CurrentCell = Cells(inSourceRow + 1, 2)
       EmptyCount = 1
-
       If IsEmpty(CurrentCell.Offset(1, 0)) Then
-
         CurrentCell = CurrentCell.Offset(1, 0)
         EmptyCount = EmptyCount + 1
-
       End If
-
     End If
-'If there are more than two companies on the same contract,
-'the main owner receives the email
-
+    'If there are more than two companies on the same contract,
+    'the main owner receives the email
     If Not IsEmpty(inSourceBook.ActiveSheet.Cells(inSourceRow, 8).Value) _
         And EmptyCount > 2 Then
-
       SalesRepSplit = Split(Trim(inSourceBook.ActiveSheet.Cells(inSourceRow, _
                                                                 8)).Value, " ")
       GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
-
     Else 'Otherwise the sales representative gets the email
-
       SalesRepSplit = Split(Trim(inSourceBook.ActiveSheet.Cells(inSourceRow, _
                                                                 7).Value), " ")
       GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
-
     End If
-
     Attempts = Attempts + 1
-
   Else 'This runs if there is no source spreadsheet
-
     GetRepName = InputBox("Please enter the name of the Sales Representative" _
                             & vbNewLine & "associated with this contract." _
                             & vbNewLine & "Contract Number: " _
                             & inContractNo, "Sales Representative Name")
-
     If GetRepName = vbNullString Then
-
       Call ResetSettings
       End
-
     ElseIf GetRepName Like "*[0-9]*" Then
-
       MsgBox "Sorry, only letters are allowed in a _
               Sales Representative's name." & vbNewLine & "Please enter the" _
               & " Representative's name with this format:" & vbNewLine _
               & "FirstName LastName", , "Invalid Character"
-
       GetRepName = vbNullString
-
     ElseIf InStr(GetRepName, " ") = 0 Then
-
       MsgBox "Please enter the Representative's name with this format:" _
                 & vbNewLine & "FirstName LastName", , "Missing Space"
-
       GetRepName = vbNullString
-
     End If
-
   End If
-
   If Attempts = 3 Then
-
     MsgBox "A valid sales representative name was not found"
     Call ResetSettings
     End
-
   End If
-
 Loop
-
 GetRepName = StrConv(Trim(GetRepName), vbProperCase)
 
 End Function
@@ -423,22 +317,15 @@ Dim TxtContractSplit
 Do While IsEmpty(textBook.ActiveSheet.Range("A1").Value)
  textBook.ActiveSheet.Range("A1").EntireRow.Delete
 Loop
-
 TxtContractSplit = Split(textBook.ActiveSheet.Range("A3").Value, ",")
-
 'This block checks for a text file that only has one contract listed and then
 'splits by space in order to get the correct value
 If UBound(TxtContractSplit, 1) - LBound(TxtContractSplit, 1) + 1 <= 2 Then
-
   TxtContractSplit = Split(textBook.ActiveSheet.Range("A3").Value, " ")
   GetContract = Trim(TxtContractSplit(1))
-
 Else
-
   GetContract = Trim(TxtContractSplit(1))
-
 End If
-
 'Removes trailing comma
 If Right(GetContract, 1) = "," Then GetContract = Left(GetContract, _
                                                         Len(GetContract) - 1)
@@ -456,7 +343,6 @@ Dim TempTwo As String
 Dim TempArray(1 To 2) As Variant
 
 TempOne = FindFirstInstancePart(inContractNo, inSourceBook.ActiveSheet)
-
 If TempOne = -1 Then
   TempArray(1) = "Failed"
   SourceContractRow = TempArray
@@ -490,56 +376,40 @@ Dim SavePath As String
 Dim SpacePlace As Long
 
 If sheetAnswer = vbYes Then 'If there is a source sheet
-
   SaveName = sourceName
-
   'This sets the current time as when the file was processed
   With sourceBook.ActiveSheet.Cells(sourceRow, 10)
     .NumberFormat = "mm/dd/yyyy hh:mm:ss"
     .Value = Now
     .Columns.AutoFit
   End With
-
 Else 'No source sheet
-
   SaveName = Trim(textBook.ActiveSheet.Range("A2").Value)
   SpacePlace = InStr(1, SaveName, " ", vbTextCompare)
-
   'Checks for mismatched contract numbers, and alerts the user
   If contractNo <> Trim(Left(SaveName, SpacePlace)) Then
-
     SaveName = InputBox("Contract numbers do not match." & vbNewLine _
                           & "Please enter the contract number and name.", _
                           "Contract Number and Name")
     SpacePlace = InStr(1, SaveName, " ", vbTextCompare)
     contractNo = Trim(Left(SaveName, SpacePlace))
-
   End If
-
 End If
-
 SaveName = Replace(SaveName, "/", "-") 'Removes any forward slashes
 SpacePlace = InStr(1, inRep, " ", vbTextCompare)
 FirstName = Trim(Left(inRep, SpacePlace))
-
 ContractAndRep(1) = contractNo
 ContractAndRep(2) = inRep
 ContractAndRep(3) = FirstName
-
 SavePath = inPath & "Contract Renewals\" & ContractAndRep(2) & "\"
-
 If Len(Dir(SavePath, vbDirectory)) = 0 Then Call MakeAllDirs(SavePath)
-
 Application.DisplayAlerts = False
-
 '51 is the enumeration for .xlsx files
 textBook.SaveAs Filename:=Trim(SavePath) & Trim(SaveName) & ".xlsx", _
                             FileFormat:=51, AccessMode:=xlExclusive, _
                             ConflictResolution:=Excel.XlSaveConflictResolution _
                                                   .xlLocalSessionChanges
-
 Application.DisplayAlerts = True
-
 SaveXlsxFiles = ContractAndRep
 
 End Function
@@ -563,42 +433,23 @@ Dim OutMail As Object
 
 Set OutApp = CreateObject("Outlook.Application")
 Set OutMail = OutApp.CreateItem(0)
-
 'Check if the file exists first and exit if it doesn't
-
 'Get the body of the email
-'DOUBLE CHECK THE SYNTAX
-
 If inFirstName = "House" Then inFirstName = ""
-
 EmailBody = "Hello " & inFirstName & "," & inBodyText
-
 'On Error Resume Next
-
 With OutMail
-
   .DeferredDeliveryTime = inSendTime
-
   If inSalesRep = "House Account" Then
-
     .To = Join(inListForHouseAccount, "; ")
-
   Else
-
     .To = inSalesRep
-
   End If
-
   If IsInArray(CStr(inSalesRep), inListOfRepsToCC) Then
-
     .CC = Join(inListOfCCRecipients, ",")
-
   Else
-
     .CC = vbNullString
-
   End If
-
   .BCC = vbNullString
   .Subject = inContract & " Contract Renewal"
   .HTMLBody = EmailBody
@@ -607,11 +458,8 @@ With OutMail
   '.Attachments.Add ("C:\test.txt")
   .Send   'or use .Display
   '.Display
-
 End With
-
 On Error GoTo 0
-
 Set OutMail = Nothing
 Set OutApp = Nothing
 
@@ -633,30 +481,20 @@ Dim InTxtList() As String
 Dim TxtPath As String
 
 I = 0
-
 TxtPath = Dir(filesLoc & "*.txt")
-
 'Structure from
 'http://www.java2s.com/Code/VBA-Excel-Access-Word/File-Path/Usearraytostorealistoffiles.htm
 'This next block avoids processing "non" text files
-
 Do While TxtPath <> vbNullString
-
   If Not LCase(TxtPath) Like LCase("*NON.txt") Then
-
     I = I + 1
     ReDim Preserve InTxtList(1 To I)
     InTxtList(I) = TxtPath
     TxtPath = Dir
-
   Else
-
     TxtPath = Dir
-
   End If
-
 Loop
-
 GetFileNames = InTxtList
 
 End Function
@@ -670,16 +508,13 @@ If Len(Dir(inPath & "Processed Files\" & MonthName(Month(Now)) & " " _
             & Year(Now) & "\", vbDirectory)) = 0 Then _
   Call MakeAllDirs(inPath & "Processed Files\" & MonthName(Month(Now)) & " " _
                     & Year(Now) & "\")
-
 If inFile = vbNullString Then
   Call ResetSettings
   MsgBox("Worksheet error detected!")
   End
 End If
-
 'Gets just the text file name, and saves it to NameOfFile
 NameOfFile = Split(inFile, "\")
-
 'Saves the file under the current month and year folder
 Name inFile As inPath & "Processed Files\" & MonthName(Month(Now)) & " " _
                 & Year(Now) & "\" & NameOfFile(UBound(NameOfFile))
@@ -694,7 +529,6 @@ Dim I As Long
 Dim Rng As Range
 
 If Range("M1") <> "Prepared" Then
-
   'This fixes the partial name and an error
   Cells.Replace What:="Salvers", Replacement:="SALVERSON", LookAt:=xlPart, _
     SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
@@ -702,17 +536,13 @@ If Range("M1") <> "Prepared" Then
   Cells.Replace What:="Binkowski-EBI", Replacement:="BINKOWSKI", _
     LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, _
     SearchFormat:=False, ReplaceFormat:=True
-
   'Search Column or range
   With inSourceBook.Worksheets(1).Range("G:G")
-
     For I = LBound(namesArr) To UBound(namesArr)
-
       'If you want to find a part of the rng.value then use xlPart
       'if you use LookIn:=xlValues it will also work with a
       'formula cell that evaluates to the search term.
       'This next block searches for the values in the above array
-
       Set Rng = .Find(What:=namesArr(I), _
               After:=.Cells(.Cells.Count), _
               LookIn:=xlFormulas, _
@@ -720,9 +550,7 @@ If Range("M1") <> "Prepared" Then
               SearchOrder:=xlByRows, _
               SearchDirection:=xlNext, _
               MatchCase:=False)
-
       If Not Rng Is Nothing Then
-
         FirstAddress = Rng.Address
         Do
           'Mark to the right if the search term is found
@@ -730,38 +558,27 @@ If Range("M1") <> "Prepared" Then
             .Value = "IGNORED"
             .Interior.Color = 65535
           End With
-
           Set Rng = .FindNext(Rng)
-
         Loop While Not Rng Is Nothing And Rng.Address <> FirstAddress
-
       End If
-
     Next I
-
   End With
-
   With Cells(1, 9)
     .Value = "Time Pulled"
     .Interior.Color = 12632256
   End With
-
   With Cells(1, 10)
     .Value = "Time Processed"
     .Interior.Color = 12632256
   End With
-
   With Cells(1, 11)
     .Value = "Time Sent"
     .Interior.Color = 12632256
   End With
-
   Range("A:K").Borders.LineStyle = xlContinuous
   Range("M3").Value = "Last Run:"
   Range("M1").Value = "Prepared"
-
 End If
-
 Range("M2").Value = "RUNNING"
 Cells.Font.Name = "Tahoma"
 Cells.Columns.AutoFit
@@ -779,7 +596,6 @@ Dim ToPath As String
 
 FromPath = inPath & "Contract Renewals\*"
 ToPath = "S:\Contract Reviews\"
-
 Set FSO = CreateObject("scripting.filesystemobject")
 FSO.CopyFolder Source:=FromPath, Destination:=ToPath
 FSO.DeleteFolder FromPath 'Removes the folder after files are copied
@@ -807,9 +623,9 @@ End Sub
 Sub MoveFailedFiles(inPath As String, inName As String)
 'This moves any failed files to the appropriate directory
 
-If Len(Dir(inPath & "Failed Files", vbDirectory)) = 0 Then _
+If Len(Dir(inPath & "Failed Files", vbDirectory)) = 0 Then
   Call MakeAllDirs(inPath & "Failed Files")
-
+End If
 Name inPath & inName As inPath & "Failed Files" & "\" & inName
 
 End Sub
@@ -823,57 +639,39 @@ Dim count As Long
 Dim Times() As Date
 
 count = 0
-
 If inSalesSendTimes.Exists(inRep) Then
-
-  inSalesSendTimes(inRep) = DateAdd("n", 12, inSalesSendTimes(inRep))
-
+  inSalesSendTimes(inRep) = DateAdd("n", 10, inSalesSendTimes(inRep))
   'Avoids sending emails after 1700 hours
   If inSalesSendTimes(inRep) >= 17 Then
-
     inSalesSendTimes(inRep) = DateAdd("n", 940, inSalesSendTimes(inRep))
-
   End If
-
   'Avoids sending emails on the weekend
   If Weekday(inSalesSendTimes(inRep), vbSunday) = 1 Then
-
     inSalesSendTimes(inRep) = DateAdd("d", 1, inSalesSendTimes(inRep))
-
   ElseIf Weekday(inSalesSendTimes(inRep), vbSunday) = 7 Then
-
     inSalesSendTimes(inRep) = DateAdd("d", 2, inSalesSendTimes(inRep))
-
   End If
-
 Else
-
   If inSalesSendTimes.Count = 0 Then
-
     inSalesSendTimes(inRep) = DateAdd("n", 5, inSalesSendTimes(inRep))
-
   Else
-
     For Each item in inSalesSendTimes.Keys
       ReDim Preserve Times(j) As Date
       Times(UBound(Times)) = inSalesSendTimes(item)
       count = count + 1
     Next
-
   Call QuickSort1(Times)
     inSalesSendTimes(inRep) = Times(LBound(Times))
-
   End If
-
 End If
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-'http://www.vbforums.com/showthread.php?473677&p=2909259#post2909259
-' Omit plngLeft & plngRight; they are used internally during recursion
 Public Sub QuickSort1(ByRef pvarArray As Variant, _
                       Optional ByVal plngLeft As Long, _
                       Optional ByVal plngRight As Long)
+'http://www.vbforums.com/showthread.php?473677&p=2909259#post2909259
+' Omit plngLeft & plngRight; they are used internally during recursion
 
     Dim lngFirst As Long
     Dim lngLast As Long
@@ -947,46 +745,29 @@ Open inPath & "DataFiles\EmailBody.txt" For Input As #1
 BodyText = Input$(LOF(1), 1)
 Close #1
 Call SetSettings
-
 EmailAnswer = MsgBox("Would you like to email the finished spreadsheets?", _
                       vbYesNo + vbMsgBoxSetForeground, "Email Sheets?")
-
 If EmailAnswer = vbYes Then
-
   Email = 1
-
 Else
-
   Email = 0
-
 End If
-
 Files = 0
-
 'Get text file location
 Do
   Path = InputBox("Please enter the location of the text files.", _
                   "Text File Location", "S:\CSR\Contract Renewal Text Files\")
-
   Path = SetPath(Path)
-
 Loop Until Path <> vbNullString
-
 TxtList = GetFileNames(Path)
-
 ValidDir = VerifyTextFile(TxtList, Path)
-
 'Resets settings and exits the macro if no text files are found
 If ValidDir = vbNullString Then
-
   MsgBox "No text files were found."
   Call ResetSettings
   Exit Sub
-
 End If
-
 Set FSO = CreateObject("Scripting.FileSystemObject")
-
 If Dir(Path & "DataFiles\DeletedDuplicates.txt") = "" Then
   Set deleteLog = FSO.CreateTextFile(Path & "DataFiles\DeletedDuplicates.txt")
   deleteLog.WriteLine ("Macro run at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
@@ -997,14 +778,11 @@ Else
   deleteLog.WriteLine("Macro run at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
   deleteLog.Close
 End If
-
 'See if there is a source spreadsheet and set its location, if one exists
 SpreadSheetAnswer = MsgBox("Do you have a source spreadsheet?", _
                             vbYesNo + vbQuestion + vbMsgBoxSetForeground, _
                             "Source Spreadsheet?")
-
 If SpreadSheetAnswer = vbYes Then
-
   Workbooks.Open SetSpreadsheet(Path)
   Set SourceWorkbook = ActiveWorkbook
   ListForHouseAccount = GetListOfReps(Path & "DataFiles\HouseAccount.txt", _
@@ -1018,14 +796,10 @@ If SpreadSheetAnswer = vbYes Then
   ListToNotProcess = GetListOfReps(Path & "DataFiles\NoProcess.txt", _
                                     ListToNotProcess)
   Call PrepareSource(SourceWorkbook, ListToNotProcess)
-
 End If
-
 Set SalesSendTimes = CreateObject("Scripting.Dictionary")
-
 'Remember time when macro starts
 StartTime = Timer
-
 'Gets the last time that an email is scheduled to be sent and adds 5 minutes
 If SpreadSheetAnswer = vbYes Then SendTime = DateAdd("n", _
                                                       5, _
@@ -1034,38 +808,29 @@ If SpreadSheetAnswer = vbYes Then SendTime = DateAdd("n", _
                                                         .Max(ActiveWorkbook _
                                                               .ActiveSheet _
                                                                 .Range("K:K")))
-
 'Checks if there wasn't already a date in the sent time column,
 'or if the send time was in the past
 If SendTime < Now Then SendTime = DateAdd("n", 5, SendTime)
-
 'This is what actually formats, saves, and emails the files
 For ArrPos = LBound(TxtList) To UBound(TxtList)
-
   'Opens the file
   Workbooks.OpenText Filename:=Path & TxtList(ArrPos)
-
   'Identifies the workbook to be formatted
   Set TxtWorkbook = ActiveWorkbook
-
   'Gets the contract number
   ContractNumber = GetContract(TxtWorkbook)
-
   'Error handling
   'This first block checks if the contract has been sent in the past 6 months.
   'If it has, it deletes the text file and proceeds.
   'Else, it moves forward with sending the sheet.
   Select Case Month(Now)
   Case 1
-
     For M = 1 To 5
-
       If (Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " _
               & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
           Dir(Path & "Processed Files\" & MonthName(12 - M) & " " _
               & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "") _
               And AlreadyProcessed = 0 Then
-
         Call CloseXslxFiles(TxtWorkbook)
         '8 sets the file to the "ForAppending" mode
         Set deleteLog = FSO.OpenTextFile(Path _
@@ -1078,15 +843,10 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
         Exit For
-
       End If
-
     Next M
-
   Case Is < 6
-
     For M = 0 To (Month(Now) - 1)
-
       If (Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " _
               & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
         Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " _
@@ -1094,7 +854,6 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Dir(Path & "Processed Files\" & MonthName(12 - (6 - M)) & " " _
             & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "") _
         And AlreadyProcessed = 0 Then
-
         Call CloseXslxFiles(TxtWorkbook)
         Set deleteLog = FSO.OpenTextFile(Path _
                                           & "DataFiles\DeletedDuplicates.txt", _
@@ -1106,22 +865,16 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
         Exit For
-
       End If
-
     Next M
-
    Case 6
-
     For M = 0 To (Month(Now) - 1)
-
       If (Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " _
               & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
         Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " _
             & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
         Dir(Path & "Processed Files\" & MonthName(12) & " " & (Year(Now) - 1) _
             & "\" & TxtList(ArrPos)) <> "") And AlreadyProcessed = 0 Then
-
         Call CloseXslxFiles(TxtWorkbook)
         Set deleteLog = FSO.OpenTextFile(Path _
                                           & "DataFiles\DeletedDuplicates.txt", _
@@ -1133,21 +886,15 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
         Exit For
-
        End If
-
       Next M
-
    Case Is > 6
-
     For M = 0 To 6
-
       If (Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " _
               & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
         Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " _
             & Year(Now) & "\" & TxtList(ArrPos)) <> "") _
         And AlreadyProcessed = 0 Then
-
         Call CloseXslxFiles(TxtWorkbook)
         Set deleteLog = FSO.OpenTextFile(Path _
                                           & "DataFiles\DeletedDuplicates.txt", _
@@ -1159,22 +906,14 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         Kill Path & TxtList(ArrPos)
         AlreadyProcessed = 1
         Exit For
-
        End If
-
       Next M
-
   End Select
-
   If Range("A2").Value = 0 Or ContractNumber = "0" _
     Or ContractNumber = vbNullString Then
-
     Call CloseXslxFiles(TxtWorkbook)
-
     Call MoveFailedFiles(Path, CStr(TxtList(ArrPos)))
-
   ElseIf AlreadyProcessed <> 1 Then
-
     'Locates the contract in the source workbook, if one exists
     If SpreadSheetAnswer = vbYes Then SourceConRow = _
                                         SourceContractRow(SourceWorkbook, _
@@ -1182,44 +921,29 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
                                           ContractNumber, _
                                           Path, _
                                           CStr(TxtList(ArrPos)))
-
     If SourceConRow(1) <> "Failed" Then
-
     Rep = GetRepName(SpreadSheetAnswer, CLng(SourceConRow(1)), SourceWorkbook, _
                       ContractNumber)
-
     If IsInArray(Rep, ListOfNonConReps) And SourceConRow(1) <> "Failed" Then
-
       'This block searches for "NON" file, and if one exists merges the NON and
       'the regular file.
       NonWorkbookPath = Path & ContractNumber & "NON.txt"
-
       If Len(Dir(NonWorkbookPath)) <> 0 Then
-
         Workbooks.OpenText NonWorkbookPath
         Set NonWorkbook = ActiveWorkbook
         Call MergeBooks(TxtWorkbook, NonWorkbook)
         Call CloseXslxFiles(NonWorkbook)
         Call MoveProcessedFiles(NonWorkbookPath, Path)
-
       End If
-
     End If
-
   End If
-
   'Does not process any "non-process" text files that may have been pulled
   If IsInArray(Rep, ListToNotProcess) And SourceConRow(1) <> "Failed" Then
-
     Call CloseXslxFiles(TxtWorkbook)
-
     'Log this deletion?
     Kill Path & TxtList(ArrPos)
-
   ElseIf SourceConRow(1) <> "Failed" Then
-
     Call Formatting(TxtWorkbook)
-
     ContractAndRepArray = SaveXlsxFiles(SourceWorkbook, _
                                         TxtWorkbook, _
                                         SpreadSheetAnswer, _
@@ -1228,11 +952,8 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
                                         CLng(SourceConRow(1)), _
                                         CStr(SourceConRow(2)), _
                                         Path)
-
     If Email = 1 Then
-
       SendTime = DetermineSendTime(SalesSendTimes, Rep, SendTime)
-
       Call EmailXslxFiles(ContractAndRepArray(1), _
                           ContractAndRepArray(2), _
                           ContractAndRepArray(3), _
@@ -1242,48 +963,32 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
                           ListOfCCRecipients, _
                           ListForHouseAccount, _
                           ListOfRepsToCC)
-
       'This logs when the contract was actually sent
       With sourceBook.ActiveSheet.Cells(CLng(SourceConRow(1)), 11)
         .NumberFormat = "mm/dd/yyyy hh:mm:ss"
         .Value = SendTime
         .Columns.AutoFit
       End With
-
     If SpreadSheetAnswer = vbYes Then SourceWorkbook.Save
-
     Call CloseXslxFiles(TxtWorkbook)
-
     'Sorts the processed files
     Call MoveProcessedFiles(Path & CStr(TxtList(ArrPos)), Path)
-
     Files = Files + 1
-
     End If
-
   End If
-
   AlreadyProcessed = 0
-
 Next ArrPos
-
 'Determine how many seconds code took to run
 SecondsElapsed = Round(Timer - StartTime, 2)
-
 'Notify user in seconds
 MsgBox "This code processed " & Files & " files in " & SecondsElapsed _
         & " seconds.", vbInformation
-
 Call ResetSettings
-
 ShouldMove = MsgBox("Would you like to move the processed .xslx files to the" _
                     & " appropriate folder?", vbYesNo, "Move Spreadsheets?")
-
 If ShouldMove = vbYes Then Call MoveSpreadsheets(Path)
-
 SourceWorkbook.ActiveSheet.Range("M2").Value = "Not Running"
 SourceWorkbook.ActiveSheet.Range("N3").Value = Now
-
 Call CloseXslxFiles(SourceWorkbook)
 Application.Quit
 
