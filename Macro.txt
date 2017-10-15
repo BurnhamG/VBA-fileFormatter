@@ -542,10 +542,10 @@ SaveXlsxFiles = ContractAndRep
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function EmailXslxFiles(InContract As String, _
+Sub EmailXslxFiles(InContract As String, _
                         InSalesRep As String, _
                         InFirstName As String, _
-                        InSendTime As Date, _
+                        InSendTime As Date,
                         SourceBook As Workbook, _
                         TextBook As Workbook, _
                         inSheetAnswer As String, _
@@ -636,25 +636,8 @@ If inSheetAnswer = vbYes Then 'If there is a source sheet
 End If
 
 'Sets up delayed delivery so as to not flood the system
-InSendTime = DateAdd("n", 4, InSendTime)
 
-'Avoids sending emails after 1700 hours
-If Hour(InSendTime) >= 17 Then InSendTime = DateAdd("n", 940, InSendTime)
-
-'Avoids sending emails on the weekend
-If Weekday(InSendTime, vbSunday) = 1 Then
-
-  InSendTime = DateAdd("d", 1, InSendTime)
-
-ElseIf Weekday(InSendTime, vbSunday) = 7 Then
-
-  InSendTime = DateAdd("d", 2, InSendTime)
-
-End If
-
-EmailXslxFiles = InSendTime
-
-End Function
+End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 Sub CloseXslxFiles(inBook As Workbook)
 
@@ -853,6 +836,97 @@ Name inPath & inName As inPath & "Failed Files" & "\" & inName
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Function DetermineSendTime(InSalesSendTimes As Dictionary, InRep As String)
+
+Dim i As Variant
+Dim j As Long
+Dim Times() As Date
+
+j = 0
+
+If InSalesSendTimes.Exists(InRep) Then
+
+  InSalesSendTimes(InRep) = DateAdd("n", 12, InSalesSendTimes(InRep))
+
+  'Avoids sending emails after 1700 hours
+  If InSalesSendTimes(InRep) >= 17 Then
+
+    InSalesSendTimes(InRep) = DateAdd("n", 940, InSalesSendTimes(InRep))
+
+  End If
+
+  'Avoids sending emails on the weekend
+  If Weekday(InSalesSendTimes(InRep), vbSunday) = 1 Then
+
+    InSalesSendTimes(InRep) = DateAdd("d", 1, InSalesSendTimes(InRep))
+
+  ElseIf Weekday(InSalesSendTimes(InRep), vbSunday) = 7 Then
+
+    InSalesSendTimes(InRep) = DateAdd("d", 2, InSalesSendTimes(InRep))
+
+  End If
+
+Else
+
+  If InSalesSendTimes.Count = 0 Then
+
+    InSalesSendTimes(InRep) = DateAdd("n", 5, InSalesSendTimes(InRep))
+
+  Else
+
+    For Each i in InSalesSendTimes.Keys
+      ReDim Preserve Times(j) As Date
+      Times(UBound(Times)) = InSalesSendTimes(i)
+      j = j + 1
+    Next
+
+  Call QuickSort1(Times)
+    InSalesSendTimes(InRep) = Times(LBound(Times))
+
+  End If
+
+End If
+
+End Function
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'http://www.vbforums.com/showthread.php?473677&p=2909259#post2909259
+' Omit plngLeft & plngRight; they are used internally during recursion
+Public Sub QuickSort1(ByRef pvarArray As Variant, _
+                      Optional ByVal plngLeft As Long, _
+                      Optional ByVal plngRight As Long)
+
+    Dim lngFirst As Long
+    Dim lngLast As Long
+    Dim varMid As Variant
+    Dim varSwap As Variant
+
+    If plngRight = 0 Then
+        plngLeft = LBound(pvarArray)
+        plngRight = UBound(pvarArray)
+    End If
+    lngFirst = plngLeft
+    lngLast = plngRight
+    varMid = pvarArray((plngLeft + plngRight) \ 2)
+    Do
+        Do While pvarArray(lngFirst) < varMid And lngFirst < plngRight
+            lngFirst = lngFirst + 1
+        Loop
+        Do While varMid < pvarArray(lngLast) And lngLast > plngLeft
+            lngLast = lngLast - 1
+        Loop
+        If lngFirst <= lngLast Then
+            varSwap = pvarArray(lngFirst)
+            pvarArray(lngFirst) = pvarArray(lngLast)
+            pvarArray(lngLast) = varSwap
+            lngFirst = lngFirst + 1
+            lngLast = lngLast - 1
+        End If
+    Loop Until lngFirst > lngLast
+    If plngLeft < lngLast Then QuickSort1 pvarArray, plngLeft, lngLast
+    If lngFirst < plngRight Then QuickSort1 pvarArray, lngFirst, plngRight
+
+End Sub
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 Sub ContractRenewals()
 'The meat and potatoes: This pulls everything together
 'SOURCE FOR TIMER: www.TheSpreadsheetGuru.com/the-code-vault
@@ -877,6 +951,7 @@ Dim NonWorkbook As Workbook
 Dim NonWorkbookPath As String
 Dim Path As String
 Dim Rep As String
+Dim SalesSendTimes As Object
 Dim SecondsElapsed As Double
 Dim SendTime As Date
 Dim ShouldMove As Integer
@@ -935,8 +1010,8 @@ If Dir(Path & "DataFiles\DeletedDuplicates.txt") = "" Then
   deleteLog.Close
 Else
   Set deleteLog = FSO.OpenTextFile(Path & "DataFiles\DeletedDuplicates.txt", 8)
-  deleteLog.WriteBlankLines (1)
-  deleteLog.WriteLine ("Macro run at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
+  deleteLog.WriteBlankLines(1)
+  deleteLog.WriteLine("Macro run at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
   deleteLog.Close
 End If
 
@@ -963,6 +1038,8 @@ If SpreadSheetAnswer = vbYes Then
 
 End If
 
+Set SalesSendTimes = CreateObject("Scripting.Dictionary")
+
 'Remember time when macro starts
 StartTime = Timer
 
@@ -977,7 +1054,7 @@ If SpreadSheetAnswer = vbYes Then SendTime = DateAdd("n", _
 
 'Checks if there wasn't already a date in the sent time column,
 'or if the send time was in the past
-If SendTime < Now Then SendTime = Now
+If SendTime < Now Then SendTime = DateAdd("n", 5, SendTime)
 
 'This is what actually formats, saves, and emails the files
 For ArrPos = LBound(TxtList) To UBound(TxtList)
@@ -1174,6 +1251,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
                                                 ContractAndRepArray(2), _
                                                 ContractAndRepArray(3), _
                                                 SendTime, _
+                                                SalesSendTimes, _
                                                 SourceWorkbook, _
                                                 TxtWorkbook, _
                                                 SpreadSheetAnswer, _
