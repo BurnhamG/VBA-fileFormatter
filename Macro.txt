@@ -20,7 +20,7 @@ Do
   Else
     SpreadSheetFile = Dir
   End If
-Loop While CorrectSheet <> vbYes And SetSpreadsheet = ""
+Loop While CorrectSheet <> vbYes And SetSpreadsheet = vbNullString
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -257,9 +257,9 @@ Do While GetRepName Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True
       Call ResetSettings
       End
     ElseIf GetRepName Like "*[0-9]*" Then
-      MsgBox "Sorry, only letters are allowed in a _
-              Sales Representative's name." & vbNewLine & "Please enter the" _
-              & " Representative's name with this format:" & vbNewLine _
+      MsgBox "Sorry, only letters are allowed in a " _
+              & "Sales Representative's name." & vbNewLine & "Please enter " _
+              & " the Representative's name with this format:" & vbNewLine _
               & "FirstName LastName", , "Invalid Character"
       GetRepName = vbNullString
     ElseIf InStr(GetRepName, " ") = 0 Then
@@ -414,9 +414,9 @@ SaveXlsxFiles = ContractAndRep
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub EmailXslxFiles(inContract As String, _
-                        inSalesRep As String, _
-                        inFirstName As String, _
+Sub EmailXslxFiles(inContract, _
+                        inSalesRep, _
+                        inFirstName, _
                         inBodyText, _
                         inSendTime As Date, _
                         textBook As Workbook, _
@@ -435,8 +435,11 @@ Set OutApp = CreateObject("Outlook.Application")
 Set OutMail = OutApp.CreateItem(0)
 'Check if the file exists first and exit if it doesn't
 'Get the body of the email
-If inFirstName = "House" Then inFirstName = ""
-EmailBody = "Hello " & inFirstName & "," & inBodyText
+If inFirstName = "House" Then
+  EmailBody = "Hello," & inBodyText
+Else
+  EmailBody = "Hello " & inFirstName & "," & inBodyText
+End If
 'On Error Resume Next
 With OutMail
   .DeferredDeliveryTime = inSendTime
@@ -502,7 +505,7 @@ End Function
 Sub MoveProcessedFiles(inFile As String, inPath As String)
 'Moves processed files to a directory for archiving by month
 
-Dim NameOfFile As String
+Dim NameOfFile() As String
 
 If Len(Dir(inPath & "Processed Files\" & MonthName(Month(Now)) & " " _
             & Year(Now) & "\", vbDirectory)) = 0 Then _
@@ -516,8 +519,8 @@ End If
 'Gets just the text file name, and saves it to NameOfFile
 NameOfFile = Split(inFile, "\")
 'Saves the file under the current month and year folder
-Name inFile As inPath & "Processed Files\" & MonthName(Month(Now)) & " " _
-                & Year(Now) & "\" & NameOfFile(UBound(NameOfFile))
+Name inFile As inPath & "Processed Files\" & MonthName(Month(Now)) _
+                      & " " & Year(Now) & "\" & NameOfFile(UBound(NameOfFile))
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -630,15 +633,17 @@ Name inPath & inName As inPath & "Failed Files" & "\" & inName
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function DetermineSendTime(inSalesSendTimes As Dictionary, _
+Function DetermineSendTime(inSalesSendTimes, _
                             inRep As String, _
                             MaxTime As Date)
+'Determines when contracts are sent out
 
 Dim item As Variant
 Dim count As Long
 Dim Times() As Date
 
 count = 0
+'If the representative is in the dictionary
 If inSalesSendTimes.Exists(inRep) Then
   inSalesSendTimes(inRep) = DateAdd("n", 10, inSalesSendTimes(inRep))
   'Avoids sending emails after 1700 hours
@@ -653,10 +658,10 @@ If inSalesSendTimes.Exists(inRep) Then
   End If
 Else
   If inSalesSendTimes.Count = 0 Then
-    inSalesSendTimes(inRep) = DateAdd("n", 5, inSalesSendTimes(inRep))
+    inSalesSendTimes(inRep) = DateAdd("n", 5, MaxTime)
   Else
     For Each item in inSalesSendTimes.Keys
-      ReDim Preserve Times(j) As Date
+      ReDim Preserve Times(count) As Date
       Times(UBound(Times)) = inSalesSendTimes(item)
       count = count + 1
     Next
@@ -664,6 +669,8 @@ Else
     inSalesSendTimes(inRep) = Times(LBound(Times))
   End If
 End If
+
+DetermineSendTime = inSalesSendTimes(inRep)
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -741,9 +748,7 @@ Dim TxtList() As Variant
 Dim TxtWorkbook As Workbook
 Dim ValidDir As String
 
-Open inPath & "DataFiles\EmailBody.txt" For Input As #1
-BodyText = Input$(LOF(1), 1)
-Close #1
+
 Call SetSettings
 EmailAnswer = MsgBox("Would you like to email the finished spreadsheets?", _
                       vbYesNo + vbMsgBoxSetForeground, "Email Sheets?")
@@ -768,7 +773,10 @@ If ValidDir = vbNullString Then
   Exit Sub
 End If
 Set FSO = CreateObject("Scripting.FileSystemObject")
-If Dir(Path & "DataFiles\DeletedDuplicates.txt") = "" Then
+Open Path & "DataFiles\EmailBody.txt" For Input As #1
+BodyText = Input$(LOF(1), 1)
+Close #1
+If Dir(Path & "DataFiles\DeletedDuplicates.txt") = vbNullString Then
   Set deleteLog = FSO.CreateTextFile(Path & "DataFiles\DeletedDuplicates.txt")
   deleteLog.WriteLine ("Macro run at " & Format(Now, "yyyy/m/dd hh:nn:ss"))
   deleteLog.Close
@@ -801,13 +809,11 @@ Set SalesSendTimes = CreateObject("Scripting.Dictionary")
 'Remember time when macro starts
 StartTime = Timer
 'Gets the last time that an email is scheduled to be sent and adds 5 minutes
-If SpreadSheetAnswer = vbYes Then SendTime = DateAdd("n", _
-                                                      5, _
-                                                      Application _
-                                                        .WorksheetFunction _
-                                                        .Max(ActiveWorkbook _
-                                                              .ActiveSheet _
+If SpreadSheetAnswer = vbYes Then
+  SendTime = DateAdd("n", 5, Application.WorksheetFunction.Max(ActiveWorkbook _
+                                                                .ActiveSheet _
                                                                 .Range("K:K")))
+End If
 'Checks if there wasn't already a date in the sent time column,
 'or if the send time was in the past
 If SendTime < Now Then SendTime = DateAdd("n", 5, SendTime)
@@ -827,9 +833,9 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
   Case 1
     For M = 1 To 5
       If (Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " _
-              & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
+              & Year(Now) & "\" & TxtList(ArrPos)) <> vbNullString Or _
           Dir(Path & "Processed Files\" & MonthName(12 - M) & " " _
-              & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "") _
+              & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> vbNullString) _
               And AlreadyProcessed = 0 Then
         Call CloseXslxFiles(TxtWorkbook)
         '8 sets the file to the "ForAppending" mode
@@ -848,11 +854,11 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
   Case Is < 6
     For M = 0 To (Month(Now) - 1)
       If (Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " _
-              & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
+              & Year(Now) & "\" & TxtList(ArrPos)) <> vbNullString Or _
         Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " _
-            & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
+            & Year(Now) & "\" & TxtList(ArrPos)) <> vbNullString Or _
         Dir(Path & "Processed Files\" & MonthName(12 - (6 - M)) & " " _
-            & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> "") _
+            & (Year(Now) - 1) & "\" & TxtList(ArrPos)) <> vbNullString) _
         And AlreadyProcessed = 0 Then
         Call CloseXslxFiles(TxtWorkbook)
         Set deleteLog = FSO.OpenTextFile(Path _
@@ -870,11 +876,12 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
    Case 6
     For M = 0 To (Month(Now) - 1)
       If (Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " _
-              & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
+              & Year(Now) & "\" & TxtList(ArrPos)) <> vbNullString Or _
         Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " _
-            & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
+            & Year(Now) & "\" & TxtList(ArrPos)) <> vbNullString Or _
         Dir(Path & "Processed Files\" & MonthName(12) & " " & (Year(Now) - 1) _
-            & "\" & TxtList(ArrPos)) <> "") And AlreadyProcessed = 0 Then
+            & "\" & TxtList(ArrPos)) <> vbNullString) And _
+            AlreadyProcessed = 0 Then
         Call CloseXslxFiles(TxtWorkbook)
         Set deleteLog = FSO.OpenTextFile(Path _
                                           & "DataFiles\DeletedDuplicates.txt", _
@@ -891,9 +898,9 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
    Case Is > 6
     For M = 0 To 6
       If (Dir(Path & "Processed Files\" & MonthName(Month(Now)) & " " _
-              & Year(Now) & "\" & TxtList(ArrPos)) <> "" Or _
+              & Year(Now) & "\" & TxtList(ArrPos)) <> vbNullString Or _
         Dir(Path & "Processed Files\" & MonthName(Month(Now) - M) & " " _
-            & Year(Now) & "\" & TxtList(ArrPos)) <> "") _
+            & Year(Now) & "\" & TxtList(ArrPos)) <> vbNullString) _
         And AlreadyProcessed = 0 Then
         Call CloseXslxFiles(TxtWorkbook)
         Set deleteLog = FSO.OpenTextFile(Path _
@@ -921,9 +928,9 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
                                           ContractNumber, _
                                           Path, _
                                           CStr(TxtList(ArrPos)))
-    If SourceConRow(1) <> "Failed" Then
-    Rep = GetRepName(SpreadSheetAnswer, CLng(SourceConRow(1)), SourceWorkbook, _
-                      ContractNumber)
+    If SourceConRow(1) <> "Failed" Then _
+      Rep = GetRepName(SpreadSheetAnswer, CLng(SourceConRow(1)), _
+                        SourceWorkbook, ContractNumber)
     If IsInArray(Rep, ListOfNonConReps) And SourceConRow(1) <> "Failed" Then
       'This block searches for "NON" file, and if one exists merges the NON and
       'the regular file.
@@ -964,16 +971,17 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
                           ListForHouseAccount, _
                           ListOfRepsToCC)
       'This logs when the contract was actually sent
-      With sourceBook.ActiveSheet.Cells(CLng(SourceConRow(1)), 11)
+      With SourceWorkbook.ActiveSheet.Cells(CLng(SourceConRow(1)), 11)
         .NumberFormat = "mm/dd/yyyy hh:mm:ss"
         .Value = SendTime
         .Columns.AutoFit
       End With
-    If SpreadSheetAnswer = vbYes Then SourceWorkbook.Save
-    Call CloseXslxFiles(TxtWorkbook)
-    'Sorts the processed files
-    Call MoveProcessedFiles(Path & CStr(TxtList(ArrPos)), Path)
-    Files = Files + 1
+
+      If SpreadSheetAnswer = vbYes Then SourceWorkbook.Save
+      Call CloseXslxFiles(TxtWorkbook)
+      'Sorts the processed files
+      Call MoveProcessedFiles(Path & CStr(TxtList(ArrPos)), Path)
+      Files = Files + 1
     End If
   End If
   AlreadyProcessed = 0
