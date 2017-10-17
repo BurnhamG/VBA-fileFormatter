@@ -1,6 +1,6 @@
 Option Explicit
 
-Function SetSpreadsheet(inPath As String)
+Private Function SetSpreadsheet(inPath As String)
 'This is used to select a spreadsheet file, usually the source spreadsheet
 
 Dim CorrectSheet As String
@@ -24,7 +24,7 @@ Loop While CorrectSheet <> vbYes And SetSpreadsheet = vbNullString
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function GetListOfReps(inFile As String, inArray() As String)
+Private Function GetListOfReps(inFile As String, inArray() As String)
 
 Dim I As Long
 
@@ -40,13 +40,13 @@ GetListOfReps = inArray
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function IsInArray(stringToBeFound As String, arr As Variant) As Boolean
+Private Function IsInArray(stringToBeFound As String, arr As Variant) As Boolean
 
 IsInArray = (UBound(Filter(arr, stringToBeFound)) > -1)
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function FindFirstInstanceWhole(inFind As String, inSheet As Worksheet)
+Private Function FindFirstInstanceWhole(inFind As String, inSheet As Worksheet)
 
 'Finds the search term
 Set FindFirstInstanceWhole = inSheet.Range("A:A").Find(What:=inFind, _
@@ -56,7 +56,7 @@ If FindFirstInstanceWhole Is Nothing Then FindFirstInstanceWhole = -1
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function FindFirstInstancePart(inFind As String, inSheet As Worksheet)
+Private Function FindFirstInstancePart(inFind As String, inSheet As Worksheet)
 
 'Finds the search term
 Set FindFirstInstancePart = inSheet.Range("A:A").Find(What:=inFind, _
@@ -66,7 +66,7 @@ If FindFirstInstancePart Is Nothing Then FindFirstInstancePart = -1
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub Formatting(textBook As Workbook)
+Private Sub Formatting(textBook As Workbook)
 'This formats the text file before saving
 
 Dim CurrentRow As Long
@@ -76,63 +76,64 @@ Dim TxtSheet As Excel.Worksheet
 Dim WholeTable As Range
 
 Set TxtSheet = textBook.ActiveSheet
-'Locates header row of the table, looking for "Product"
-'Identifies the starting and ending row of the table
-TableStart = FindFirstInstanceWhole("Product", TxtSheet).Offset(1, 0).Row
-TableEnd = TxtSheet.Range("N" & TxtSheet.Rows.Count).End(xlUp).Offset(1, 0).Row
-'Set the entire range of the table
-Set WholeTable = Range("A" & TableStart, "W" & TableEnd)
-'Insert the column for calculated values
-Columns("O:O").Insert Shift:=xlToRight
-'Insert the actual formula
-Range("O" & TableStart, "O" & (TableEnd - 1)).FormulaR1C1 = _
-                                                "=(RC[-1]-RC[-4])/RC[-1]"
-'Clear the changes column and the last row with totals
-Range("N" & TableStart, "N" & TableEnd).ClearContents
-Rows(TableEnd).ClearContents
-'Clear any sorting that may exist
-TxtSheet.Sort.SortFields.Clear
-'Sort the entire table by the Sold column (E), from largest to smallest
-WholeTable.Sort Key1:=Range("E" & TableStart, "E" & TableEnd), _
-                              Order1:=xlDescending, DataOption1:=xlSortNormal
-'This next loop is used to color lines without any sales in the past year red
-'First, set the counter / placeholder variable to be equal with the first row
-CurrentRow = TableStart
-'Next, this iterates through the table and, if the sales column is blank,
-'changes the font color to bright red
-Do While CurrentRow < TableEnd
-  If IsEmpty(Cells(CurrentRow, "E")) Then
-    With Rows(CurrentRow).Font
-      .Color = 255
-      .TintAndShade = 0
+With TxtSheet
+  'Locates header row of the table, looking for "Product"
+  'Identifies the starting and ending row of the table
+  TableStart = FindFirstInstanceWhole("Product", TxtSheet).Offset(1, 0).Row
+  TableEnd = .Range("N" & .Rows.Count).End(xlUp).Offset(1, 0).Row
+  'Set the entire range of the table
+  Set WholeTable = .Range("A" & TableStart, "W" & TableEnd)
+  'Insert the column for calculated values
+  .Columns("O:O").Insert Shift:=xlToRight
+  'Insert the actual formula
+  .Range("O" & TableStart, "O" & (TableEnd - 1)).FormulaR1C1 = _
+                                                  "=(RC[-1]-RC[-4])/RC[-1]"
+  'Clear the changes column and the last row with totals
+  .Range("N" & TableStart, "N" & TableEnd).ClearContents
+  .Rows(TableEnd).ClearContents
+  'Clear any sorting that may exist
+  .Sort.SortFields.Clear
+  'Sort the entire table by the Sold column (E), from largest to smallest
+  WholeTable.Sort Key1:=.Range("E" & TableStart, "E" & TableEnd), _
+                                Order1:=xlDescending, DataOption1:=xlSortNormal
+  'This next loop is used to color lines without any sales in the past year red
+  'First, set the counter / placeholder variable to be equal with the first row
+  CurrentRow = TableStart
+  'Next, this iterates through the table and, if the sales column is blank,
+  'changes the font color to bright red
+  Do While CurrentRow < TableEnd
+    If IsEmpty(.Cells(CurrentRow, "E")) Then
+      With .Rows(CurrentRow).Font
+        .Color = 255
+        .TintAndShade = 0
+      End With
+    End If
+    CurrentRow = CurrentRow + 1
+  Loop
+  'This marks the appropriate rows with a currency style
+  .Range("G:G,J:J,K:K").NumberFormat = "$#,##0.00"
+  'This fills any cells with a negative gross profit ratio purple
+  With .Columns("I:I")
+    'Removes any conditional formatting that may exist (Mostly a safeguard)
+    .FormatConditions.Delete
+    'Condition searches for any cells with a negative value
+    With .FormatConditions.Add(Type:=xlCellValue, _
+                                Operator:=xlLess, _
+                                Formula1:="=0")
+      With .Interior
+        .Color = 16751052 'The fill color
+        .TintAndShade = 0
+      End With
+    'Only used with multiple conditional formatting rules
+    '(To prevent further formatting of cells that are true in the first pass)
+    .StopIfTrue = False
     End With
-  End If
-  CurrentRow = CurrentRow + 1
-Loop
-'This marks the appropriate rows with a currency style
-Range("G:G,J:J,K:K").NumberFormat = "$#,##0.00"
-'This fills any cells with a negative gross profit ratio purple
-With Columns("I:I")
-  'Removes any conditional formatting that may exist (Mostly a safeguard)
-  .FormatConditions.Delete
-  'Condition searches for any cells with a negative value
-  With .FormatConditions.Add(Type:=xlCellValue, _
-                              Operator:=xlLess, _
-                              Formula1:="=0")
-    With .Interior
-      .Color = 16751052 'The fill color
-      .TintAndShade = 0
-    End With
-  'Only used with multiple conditional formatting rules
-  '(To prevent further formatting of cells that are true in the first pass)
-  .StopIfTrue = False
   End With
+  .Cells.AutoFit
 End With
-TxtSheet.Cells.AutoFit
-
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function VerifyTextFile(inArray As Variant, inPath As String)
+Private Function VerifyTextFile(inArray As Variant, inPath As String)
 'Verify that text files exist in the directory by looking at array length
 
 If UBound(inArray) = -1 Then
@@ -147,7 +148,7 @@ End If
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub MakeAllDirs(sPath As String)
+Private Sub MakeAllDirs(sPath As String)
 'https://www.devhut.net/2011/09/15/vba-create-directory-structurecreate-multiple-Dirs/
 'Creates all parent direcories of a missing directory
 
@@ -174,7 +175,7 @@ End If
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function SetPath(inPath As String)
+Private Function SetPath(inPath As String)
 'Sets a path
 
 Dim MakePathAnswer As Long
@@ -210,7 +211,7 @@ SetPath = inPath
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function GetRepName(inSheetAnswer As String, _
+Private Function GetRepName(inSheetAnswer As String, _
                       inSourceRow As Long, _
                       inSourceBook As Workbook, _
                       inContractNo As String)
@@ -227,26 +228,25 @@ Dim SalesRepSplit
 Do While GetRepName Like "[a-zA-Z]*[ ]*[a-zA-Z]" <> True
   If inSheetAnswer = vbYes Then
     'This counts how many different companies fall under the same contract
-    If IsEmpty(inSourceBook.ActiveSheet.Cells(inSourceRow + 1, 2).Value) Then
-      Set CurrentCell = Cells(inSourceRow + 1, 2)
-      EmptyCount = 1
-      If IsEmpty(CurrentCell.Offset(1, 0)) Then
-        CurrentCell = CurrentCell.Offset(1, 0)
-        EmptyCount = EmptyCount + 1
+    With inSourceBook.ActiveSheet
+      If IsEmpty(.Cells(inSourceRow + 1, 2).Value) Then
+        Set CurrentCell = .Cells(inSourceRow + 1, 2)
+        EmptyCount = 1
+        If IsEmpty(CurrentCell.Offset(1, 0)) Then
+          CurrentCell = CurrentCell.Offset(1, 0)
+          EmptyCount = EmptyCount + 1
+        End If
       End If
-    End If
-    'If there are more than two companies on the same contract,
-    'the main owner receives the email
-    If Not IsEmpty(inSourceBook.ActiveSheet.Cells(inSourceRow, 8).Value) _
-        And EmptyCount > 2 Then
-      SalesRepSplit = Split(Trim(inSourceBook.ActiveSheet.Cells(inSourceRow, _
-                                                                8)).Value, " ")
-      GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
-    Else 'Otherwise the sales representative gets the email
-      SalesRepSplit = Split(Trim(inSourceBook.ActiveSheet.Cells(inSourceRow, _
-                                                                7).Value), " ")
-      GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
-    End If
+      'If there are more than two companies on the same contract,
+      'the main owner receives the email
+      If Not IsEmpty(.Cells(inSourceRow, 8).Value) And EmptyCount > 2 Then
+        SalesRepSplit = Split(Trim(.Cells(inSourceRow, 8)).Value, " ")
+        GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
+      Else 'Otherwise the sales representative gets the email
+        SalesRepSplit = Split(Trim(.Cells(inSourceRow, 7).Value), " ")
+        GetRepName = Trim(SalesRepSplit(1)) & " " & Trim(SalesRepSplit(2))
+      End If
+    End With
     Attempts = Attempts + 1
   Else 'This runs if there is no source spreadsheet
     GetRepName = InputBox("Please enter the name of the Sales Representative" _
@@ -278,7 +278,7 @@ GetRepName = StrConv(Trim(GetRepName), vbProperCase)
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub MergeBooks(inBook As Workbook, inNonBook As Workbook)
+Private Sub MergeBooks(inBook As Workbook, inNonBook As Workbook)
 'Merges contract and non contract items
 
 Dim NonEnd As Long
@@ -308,7 +308,7 @@ If NonStart <> NonEnd Then inBook.ActiveSheet _
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function GetContract(textBook As Workbook)
+Private Function GetContract(textBook As Workbook)
 'This gets the contract number from the information in the text file
 
 Dim TxtContractSplit
@@ -332,7 +332,7 @@ If Right(GetContract, 1) = "," Then GetContract = Left(GetContract, _
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function SourceContractRow(inSourceBook As Workbook, _
+Private Function SourceContractRow(inSourceBook As Workbook, _
                             inTextBook As Workbook, _
                             inContractNo As String, _
                             inPath As String, _
@@ -359,7 +359,7 @@ End If
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function SaveXlsxFiles(sourceBook As Workbook, _
+Private Function SaveXlsxFiles(sourceBook As Workbook, _
                         textBook As Workbook, _
                         sheetAnswer As String, _
                         contractNo As String, _
@@ -414,7 +414,7 @@ SaveXlsxFiles = ContractAndRep
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub EmailXslxFiles(inContract, _
+Private Sub EmailXslxFiles(inContract, _
                         inSalesRep, _
                         inFirstName, _
                         inBodyText, _
@@ -468,7 +468,7 @@ Set OutApp = Nothing
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub CloseXslxFiles(inBook As Workbook)
+Private Sub CloseXslxFiles(inBook As Workbook)
 
 Application.DisplayAlerts = False
 inBook.Close
@@ -476,7 +476,7 @@ Application.DisplayAlerts = True
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function GetFileNames(filesLoc As String)
+Private Function GetFileNames(filesLoc As String)
 'Loops through the provided folder and stores matching filenames in an array
 
 Dim I As Long
@@ -502,7 +502,7 @@ GetFileNames = InTxtList
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub MoveProcessedFiles(inFile As String, inPath As String)
+Private Sub MoveProcessedFiles(inFile As String, inPath As String)
 'Moves processed files to a directory for archiving by month
 
 Dim NameOfFile() As String
@@ -524,72 +524,73 @@ Name inFile As inPath & "Processed Files\" & MonthName(Month(Now)) _
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub PrepareSource(inSourceBook As Workbook, namesArr() As String)
+Private Sub PrepareSource(inSourceBook As Workbook, namesArr() As String)
 'Properly formats the source sheet for logging
 
 Dim FirstAddress As String
 Dim I As Long
 Dim Rng As Range
 
-If Range("M1") <> "Prepared" Then
-  'This fixes the partial name and an error
-  Cells.Replace What:="Salvers", Replacement:="SALVERSON", LookAt:=xlPart, _
-    SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
-    ReplaceFormat:=True
-  Cells.Replace What:="Binkowski-EBI", Replacement:="BINKOWSKI", _
-    LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, _
-    SearchFormat:=False, ReplaceFormat:=True
-  'Search Column or range
-  With inSourceBook.Worksheets(1).Range("G:G")
-    For I = LBound(namesArr) To UBound(namesArr)
-      'If you want to find a part of the rng.value then use xlPart
-      'if you use LookIn:=xlValues it will also work with a
-      'formula cell that evaluates to the search term.
-      'This next block searches for the values in the above array
-      Set Rng = .Find(What:=namesArr(I), _
-              After:=.Cells(.Cells.Count), _
-              LookIn:=xlFormulas, _
-              LookAt:=xlPart, _
-              SearchOrder:=xlByRows, _
-              SearchDirection:=xlNext, _
-              MatchCase:=False)
-      If Not Rng Is Nothing Then
-        FirstAddress = Rng.Address
-        Do
-          'Mark to the right if the search term is found
-          With Rng.Offset(0, 3)
-            .Value = "IGNORED"
-            .Interior.Color = 65535
-          End With
-          Set Rng = .FindNext(Rng)
-        Loop While Not Rng Is Nothing And Rng.Address <> FirstAddress
-      End If
-    Next I
-  End With
-  With Cells(1, 9)
-    .Value = "Time Pulled"
-    .Interior.Color = 12632256
-  End With
-  With Cells(1, 10)
-    .Value = "Time Processed"
-    .Interior.Color = 12632256
-  End With
-  With Cells(1, 11)
-    .Value = "Time Sent"
-    .Interior.Color = 12632256
-  End With
-  Range("A:K").Borders.LineStyle = xlContinuous
-  Range("M3").Value = "Last Run:"
-  Range("M1").Value = "Prepared"
-End If
-Range("M2").Value = "RUNNING"
-Cells.Font.Name = "Tahoma"
-Cells.Columns.AutoFit
-ActiveWorkbook.Save
-
+With inSourceBook.Worksheets(1)
+  If .Range("M1") <> "Prepared" Then
+    'This fixes the partial name and an error
+    .Cells.Replace What:="Salvers", Replacement:="SALVERSON", LookAt:=xlPart, _
+      SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+      ReplaceFormat:=True
+    .Cells.Replace What:="Binkowski-EBI", Replacement:="BINKOWSKI", _
+      LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, _
+      SearchFormat:=False, ReplaceFormat:=True
+    'Search Column or range
+    With .Worksheets(1).Range("G:G")
+      For I = LBound(namesArr) To UBound(namesArr)
+        'If you want to find a part of the rng.value then use xlPart
+        'if you use LookIn:=xlValues it will also work with a
+        'formula cell that evaluates to the search term.
+        'This next block searches for the values in the above array
+        Set Rng = .Find(What:=namesArr(I), _
+                After:=.Cells(.Cells.Count), _
+                LookIn:=xlFormulas, _
+                LookAt:=xlPart, _
+                SearchOrder:=xlByRows, _
+                SearchDirection:=xlNext, _
+                MatchCase:=False)
+        If Not Rng Is Nothing Then
+          FirstAddress = Rng.Address
+          Do
+            'Mark to the right if the search term is found
+            With Rng.Offset(0, 3)
+              .Value = "IGNORED"
+              .Interior.Color = 65535
+            End With
+            Set Rng = .FindNext(Rng)
+          Loop While Not Rng Is Nothing And Rng.Address <> FirstAddress
+        End If
+      Next I
+    End With
+    With .Cells(1, 9)
+      .Value = "Time Pulled"
+      .Interior.Color = 12632256
+    End With
+    With .Cells(1, 10)
+      .Value = "Time Processed"
+      .Interior.Color = 12632256
+    End With
+    With .Cells(1, 11)
+      .Value = "Time Sent"
+      .Interior.Color = 12632256
+    End With
+    .Range("A:K").Borders.LineStyle = xlContinuous
+    .Range("M3").Value = "Last Run:"
+    .Range("M1").Value = "Prepared"
+  End If
+  .Range("M2").Value = "RUNNING"
+  .Cells.Font.Name = "Tahoma"
+  .Cells.Columns.AutoFit
+  .Save
+End With
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub MoveSpreadsheets(inPath As String)
+Private Sub MoveSpreadsheets(inPath As String)
 'http://www.rondebruin.nl/win/s3/win026.htm
 'This moves the sent spreadsheets to the proper directory for archiving
 
@@ -605,7 +606,7 @@ FSO.DeleteFolder FromPath 'Removes the folder after files are copied
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub SetSettings()
+Private Sub SetSettings()
 'This helps the macro run faster
 
 Application.ScreenUpdating = False
@@ -614,7 +615,7 @@ Application.EnableEvents = False
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub ResetSettings()
+Private Sub ResetSettings()
 'This resets the modified settings to their defaults
 
 Application.ScreenUpdating = True
@@ -623,7 +624,7 @@ Application.EnableEvents = True
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub MoveFailedFiles(inPath As String, inName As String)
+Private Sub MoveFailedFiles(inPath As String, inName As String)
 'This moves any failed files to the appropriate directory
 
 If Len(Dir(inPath & "Failed Files", vbDirectory)) = 0 Then
@@ -633,7 +634,7 @@ Name inPath & inName As inPath & "Failed Files" & "\" & inName
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function DetermineSendTime(inSalesSendTimes, _
+Private Function DetermineSendTime(inSalesSendTimes, _
                             inRep As String, _
                             MaxTime As Date)
 'Determines when contracts are sent out
@@ -712,7 +713,7 @@ Public Sub QuickSort1(ByRef pvarArray As Variant, _
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Sub ContractRenewals()
+Private Sub ContractRenewals()
 'The meat and potatoes: This pulls everything together
 'SOURCE FOR TIMER: www.TheSpreadsheetGuru.com/the-code-vault
 
@@ -916,7 +917,7 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
        End If
       Next M
   End Select
-  If Range("A2").Value = 0 Or ContractNumber = "0" _
+  If TxtWorkbook.Range("A2").Value = 0 Or ContractNumber = "0" _
     Or ContractNumber = vbNullString Then
     Call CloseXslxFiles(TxtWorkbook)
     Call MoveFailedFiles(Path, CStr(TxtList(ArrPos)))
