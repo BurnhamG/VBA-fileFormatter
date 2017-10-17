@@ -26,7 +26,7 @@ End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 Function GetListOfReps(inFile As String, inArray() As String)
 
-Dim I As Integer
+Dim I As Long
 
 Open inFile For Input As #1
 I = 0
@@ -152,8 +152,8 @@ Sub MakeAllDirs(sPath As String)
 'Creates all parent direcories of a missing directory
 
 Dim Dirs           As Variant
-Dim I              As Integer
-Dim Start          As Integer
+Dim I              As Long
+Dim Start          As Long
 Dim CurDir         As String
 
 If sPath <> vbNullString Then
@@ -177,7 +177,7 @@ End Sub
 Function SetPath(inPath As String)
 'Sets a path
 
-Dim MakePathAnswer As Integer
+Dim MakePathAnswer As Long
 
 'Check to ensure path is valid and text files are in the appropriate directory
 If inPath = vbNullString Then
@@ -218,7 +218,7 @@ Function GetRepName(inSheetAnswer As String, _
 'Gets the name of the sales representative from the source workbook
 'Use Switch Case here
 
-Dim Attempts As Integer
+Dim Attempts As Long
 Dim CurrentCell
 Dim EmptyCount As Long
 Dim SalesRepSplit
@@ -716,14 +716,14 @@ Sub ContractRenewals()
 'The meat and potatoes: This pulls everything together
 'SOURCE FOR TIMER: www.TheSpreadsheetGuru.com/the-code-vault
 
-Dim AlreadyProcessed As Integer
+Dim AlreadyProcessed As Long
 Dim ArrPos As Long
 Dim BodyText As String
 Dim ContractAndRepArray
 Dim ContractNumber As String
 Dim deleteLog As Object
-Dim Email As Integer
-Dim EmailAnswer As Integer
+Dim Email As Long
+Dim EmailAnswer As Long
 Dim Files As Long
 Dim FSO As Object
 Dim ListForHouseAccount() As String 'Person that gets house contract contracts
@@ -731,7 +731,7 @@ Dim ListOfCCRecipients() As String 'The names that receive CCed messages
 Dim ListOfNonConReps() As String 'Reps that want non-contract items as well
 Dim ListOfRepsToCC() As String 'List of sales representatives that are CCed
 Dim ListToNotProcess() As String 'Reps that don't get emails at all
-Dim M As Integer 'Used when looping through months to check for duplicates
+Dim M As Long 'Used when looping through months to check for duplicates
 Dim NonWorkbook As Workbook
 Dim NonWorkbookPath As String
 Dim Path As String
@@ -739,7 +739,7 @@ Dim Rep As String
 Dim SalesSendTimes As Object
 Dim SecondsElapsed As Double
 Dim SendTime As Date
-Dim ShouldMove As Integer
+Dim ShouldMove As Long
 Dim SourceConRow As Variant
 Dim SourceWorkbook As Workbook
 Dim SpreadSheetAnswer As String
