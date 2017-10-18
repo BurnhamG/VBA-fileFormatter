@@ -27,7 +27,7 @@ End Function
 Function GetListOfReps(inFile As String)
 
 Dim I As Long
-Dim TempArray As String
+Dim TempArray() As String
 
 Open inFile For Input As #1
 I = 0
@@ -130,7 +130,7 @@ With TxtSheet
     .StopIfTrue = False
     End With
   End With
-  .Cells.AutoFit
+  .Columns.AutoFit
 End With
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -587,8 +587,8 @@ With inSourceBook.Worksheets(1)
   .Range("M2").Value = "RUNNING"
   .Cells.Font.Name = "Tahoma"
   .Cells.Columns.AutoFit
-  .Save
 End With
+inSourceBook.Save
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 Private Sub MoveSpreadsheets(inPath As String)
@@ -746,7 +746,7 @@ Dim SourceConRow As Variant
 Dim SourceWorkbook As Workbook
 Dim SpreadSheetAnswer As String
 Dim StartTime As Double
-Dim TxtList() As Variant
+Dim TxtList As Variant
 Dim TxtWorkbook As Workbook
 Dim ValidDir As Integer
 
@@ -913,31 +913,33 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
        End If
       Next M
   End Select
-  If TxtWorkbook.Range("A2").Value = 0 Or ContractNumber = "0" _
+  If AlreadyProcessed <> 1 Then
+  If TxtWorkbook.Worksheets(1).Range("A2").Value = 0 Or ContractNumber = "0" _
     Or ContractNumber = vbNullString Then
-    Call CloseXslxFiles(TxtWorkbook)
-    Call MoveFailedFiles(Path, CStr(TxtList(ArrPos)))
-  ElseIf AlreadyProcessed <> 1 Then
-    'Locates the contract in the source workbook, if one exists
-    If SpreadSheetAnswer = vbYes Then SourceConRow = _
-                                        SourceContractRow(SourceWorkbook, _
-                                          TxtWorkbook, _
-                                          ContractNumber, _
-                                          Path, _
-                                          CStr(TxtList(ArrPos)))
-    If SourceConRow(1) <> "Failed" Then _
-      Rep = GetRepName(SpreadSheetAnswer, CLng(SourceConRow(1)), _
-                        SourceWorkbook, ContractNumber)
-    If IsInArray(Rep, ListOfNonConReps) And SourceConRow(1) <> "Failed" Then
-      'This block searches for "NON" file, and if one exists merges the NON and
-      'the regular file.
-      NonWorkbookPath = Path & ContractNumber & "NON.txt"
-      If Len(Dir(NonWorkbookPath)) <> 0 Then
-        Workbooks.OpenText NonWorkbookPath
-        Set NonWorkbook = ActiveWorkbook
-        Call MergeBooks(TxtWorkbook, NonWorkbook)
-        Call CloseXslxFiles(NonWorkbook)
-        Call MoveProcessedFiles(NonWorkbookPath, Path)
+      Call CloseXslxFiles(TxtWorkbook)
+      Call MoveFailedFiles(Path, CStr(TxtList(ArrPos)))
+    Else
+      'Locates the contract in the source workbook, if one exists
+      If SpreadSheetAnswer = vbYes Then SourceConRow = _
+                                          SourceContractRow(SourceWorkbook, _
+                                            TxtWorkbook, _
+                                            ContractNumber, _
+                                            Path, _
+                                            CStr(TxtList(ArrPos)))
+      If SourceConRow(1) <> "Failed" Then _
+        Rep = GetRepName(SpreadSheetAnswer, CLng(SourceConRow(1)), _
+                          SourceWorkbook, ContractNumber)
+      If IsInArray(Rep, ListOfNonConReps) And SourceConRow(1) <> "Failed" Then
+        'This block searches for "NON" file, and if one exists merges the NON and
+        'the regular file.
+        NonWorkbookPath = Path & ContractNumber & "NON.txt"
+        If Len(Dir(NonWorkbookPath)) <> 0 Then
+          Workbooks.OpenText NonWorkbookPath
+          Set NonWorkbook = ActiveWorkbook
+          Call MergeBooks(TxtWorkbook, NonWorkbook)
+          Call CloseXslxFiles(NonWorkbook)
+          Call MoveProcessedFiles(NonWorkbookPath, Path)
+        End If
       End If
     End If
   End If
@@ -973,13 +975,12 @@ For ArrPos = LBound(TxtList) To UBound(TxtList)
         .Value = SendTime
         .Columns.AutoFit
       End With
-
+    End If
       If SpreadSheetAnswer = vbYes Then SourceWorkbook.Save
       Call CloseXslxFiles(TxtWorkbook)
       'Sorts the processed files
       Call MoveProcessedFiles(Path & CStr(TxtList(ArrPos)), Path)
       Files = Files + 1
-    End If
   End If
   AlreadyProcessed = 0
 Next ArrPos
