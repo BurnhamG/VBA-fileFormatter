@@ -24,19 +24,20 @@ Loop While CorrectSheet <> vbYes And SetSpreadsheet = vbNullString
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function GetListOfReps(inFile As String, inArray() As String)
+Function GetListOfReps(inFile As String)
 
 Dim I As Long
+Dim TempArray As String
 
 Open inFile For Input As #1
 I = 0
 Do Until EOF(1)
-  ReDim Preserve inArray(I)
-  Line Input #1, inArray(I)
+  ReDim Preserve TempArray(I)
+  Line Input #1, TempArray(I)
   I = I + 1
 Loop
 Close #1
-GetListOfReps = inArray
+GetListOfReps = TempArray
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -133,7 +134,7 @@ With TxtSheet
 End With
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Function VerifyTextFile(inArray As Variant, inPath As String)
+Function VerifyTextFile(inArray As Variant, inPath As String) As Integer
 'Verify that text files exist in the directory by looking at array length
 
 If UBound(inArray) = -1 Then
@@ -141,7 +142,7 @@ If UBound(inArray) = -1 Then
       "The current directory is " & inPath & vbNewLine & _
       "Please confirm that you entered the correct path to the text files.", , _
       "No Valid Files Found"
-  VerifyTextFile = vbNullString
+  VerifyTextFile = 0
 Else
   VerifyTextFile = 1
 End If
@@ -648,7 +649,7 @@ count = 0
 If inSalesSendTimes.Exists(inRep) Then
   inSalesSendTimes(inRep) = DateAdd("n", 10, inSalesSendTimes(inRep))
   'Avoids sending emails after 1700 hours
-  If inSalesSendTimes(inRep) >= 17 Then
+  If Hour(inSalesSendTimes(inRep)) >= 17 Then
     inSalesSendTimes(inRep) = DateAdd("n", 940, inSalesSendTimes(inRep))
   End If
   'Avoids sending emails on the weekend
@@ -747,7 +748,7 @@ Dim SpreadSheetAnswer As String
 Dim StartTime As Double
 Dim TxtList() As Variant
 Dim TxtWorkbook As Workbook
-Dim ValidDir As String
+Dim ValidDir As Integer
 
 
 Call SetSettings
@@ -768,7 +769,7 @@ Loop Until Path <> vbNullString
 TxtList = GetFileNames(Path)
 ValidDir = VerifyTextFile(TxtList, Path)
 'Resets settings and exits the macro if no text files are found
-If ValidDir = vbNullString Then
+If ValidDir = 0 Then
   MsgBox "No text files were found."
   Call ResetSettings
   Exit Sub
@@ -794,16 +795,11 @@ SpreadSheetAnswer = MsgBox("Do you have a source spreadsheet?", _
 If SpreadSheetAnswer = vbYes Then
   Workbooks.Open SetSpreadsheet(Path)
   Set SourceWorkbook = ActiveWorkbook
-  ListForHouseAccount = GetListOfReps(Path & "DataFiles\HouseAccount.txt", _
-                                      ListForHouseAccount)
-  ListOfCCRecipients = GetListOfReps(Path & "DataFiles\CcList.txt", _
-                                      ListOfCCRecipients)
-  ListOfNonConReps = GetListOfReps(Path & "DataFiles\NonConList.txt", _
-                                    ListOfNonConReps)
-  ListOfRepsToCC = GetListOfReps(Path & "DataFiles\RepsThatNeedCc.txt", _
-                                  ListOfRepsToCC)
-  ListToNotProcess = GetListOfReps(Path & "DataFiles\NoProcess.txt", _
-                                    ListToNotProcess)
+  ListForHouseAccount = GetListOfReps(Path & "DataFiles\HouseAccount.txt")
+  ListOfCCRecipients = GetListOfReps(Path & "DataFiles\CcList.txt")
+  ListOfNonConReps = GetListOfReps(Path & "DataFiles\NonConList.txt")
+  ListOfRepsToCC = GetListOfReps(Path & "DataFiles\RepsThatNeedCc.txt")
+  ListToNotProcess = GetListOfReps(Path & "DataFiles\NoProcess.txt")
   Call PrepareSource(SourceWorkbook, ListToNotProcess)
 End If
 Set SalesSendTimes = CreateObject("Scripting.Dictionary")
