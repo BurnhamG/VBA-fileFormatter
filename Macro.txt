@@ -1,6 +1,6 @@
 Option Explicit
 
-Private Function SetSpreadsheet(inPath As String)
+Function SetSpreadsheet(inPath As String)
 'This is used to select a spreadsheet file, usually the source spreadsheet
 
 Dim CorrectSheet As String
@@ -24,7 +24,7 @@ Loop While CorrectSheet <> vbYes And SetSpreadsheet = vbNullString
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Private Function GetListOfReps(inFile As String, inArray() As String)
+Function GetListOfReps(inFile As String, inArray() As String)
 
 Dim I As Long
 
@@ -40,13 +40,13 @@ GetListOfReps = inArray
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Private Function IsInArray(stringToBeFound As String, arr As Variant) As Boolean
+Function IsInArray(stringToBeFound As String, arr As Variant) As Boolean
 
 IsInArray = (UBound(Filter(arr, stringToBeFound)) > -1)
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Private Function FindFirstInstanceWhole(inFind As String, inSheet As Worksheet)
+Function FindFirstInstanceWhole(inFind As String, inSheet As Worksheet)
 
 'Finds the search term
 Set FindFirstInstanceWhole = inSheet.Range("A:A").Find(What:=inFind, _
@@ -56,7 +56,7 @@ If FindFirstInstanceWhole Is Nothing Then FindFirstInstanceWhole = -1
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Private Function FindFirstInstancePart(inFind As String, inSheet As Worksheet)
+Function FindFirstInstancePart(inFind As String, inSheet As Worksheet)
 
 'Finds the search term
 Set FindFirstInstancePart = inSheet.Range("A:A").Find(What:=inFind, _
@@ -133,7 +133,7 @@ With TxtSheet
 End With
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Private Function VerifyTextFile(inArray As Variant, inPath As String)
+Function VerifyTextFile(inArray As Variant, inPath As String)
 'Verify that text files exist in the directory by looking at array length
 
 If UBound(inArray) = -1 Then
@@ -175,7 +175,7 @@ End If
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Private Function SetPath(inPath As String)
+Function SetPath(inPath As String)
 'Sets a path
 
 Dim MakePathAnswer As Long
@@ -211,7 +211,7 @@ SetPath = inPath
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Private Function GetRepName(inSheetAnswer As String, _
+Function GetRepName(inSheetAnswer As String, _
                       inSourceRow As Long, _
                       inSourceBook As Workbook, _
                       inContractNo As String)
@@ -308,7 +308,7 @@ If NonStart <> NonEnd Then inBook.ActiveSheet _
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Private Function GetContract(textBook As Workbook)
+Function GetContract(textBook As Workbook)
 'This gets the contract number from the information in the text file
 
 Dim TxtContractSplit
@@ -332,7 +332,7 @@ If Right(GetContract, 1) = "," Then GetContract = Left(GetContract, _
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Private Function SourceContractRow(inSourceBook As Workbook, _
+Function SourceContractRow(inSourceBook As Workbook, _
                             inTextBook As Workbook, _
                             inContractNo As String, _
                             inPath As String, _
@@ -359,7 +359,7 @@ End If
 
 End Function
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Private Function SaveXlsxFiles(sourceBook As Workbook, _
+Function SaveXlsxFiles(sourceBook As Workbook, _
                         textBook As Workbook, _
                         sheetAnswer As String, _
                         contractNo As String, _
@@ -476,7 +476,7 @@ Application.DisplayAlerts = True
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Private Function GetFileNames(filesLoc As String)
+Function GetFileNames(filesLoc As String)
 'Loops through the provided folder and stores matching filenames in an array
 
 Dim I As Long
@@ -634,7 +634,7 @@ Name inPath & inName As inPath & "Failed Files" & "\" & inName
 
 End Sub
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Private Function DetermineSendTime(inSalesSendTimes, _
+Function DetermineSendTime(inSalesSendTimes, _
                             inRep As String, _
                             MaxTime As Date)
 'Determines when contracts are sent out
